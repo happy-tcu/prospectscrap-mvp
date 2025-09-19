@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Building, Mail, Phone, MapPin, ArrowLeft } from 'lucide-react';
+import { Search, Building, Mail, Phone, MapPin, ArrowLeft, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface Contact {
   id: string;
@@ -62,6 +63,30 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const exportToExcel = () => {
+    const exportData = contacts.map(contact => ({
+      'Full Name': contact.full_name || '',
+      'Title': contact.title || '',
+      'Company': contact.company || '',
+      'Email': contact.email || '',
+      'Phone': contact.phone || '',
+      'Address': contact.address_line || '',
+      'City': contact.city || '',
+      'State/Region': contact.state_region || '',
+      'Postal Code': contact.postal_code || '',
+      'Country': contact.country || '',
+      'Notes': contact.notes || '',
+      'Date Added': new Date(contact.created_at).toLocaleDateString()
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts');
+    
+    const fileName = `contacts-${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -90,6 +115,12 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
               {contacts.length} saved contact{contacts.length !== 1 ? 's' : ''}
             </p>
           </div>
+          {contacts.length > 0 && (
+            <Button onClick={exportToExcel} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export Excel
+            </Button>
+          )}
         </div>
 
         {/* Search */}
