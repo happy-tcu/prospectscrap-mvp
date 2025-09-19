@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
-import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List } from 'lucide-react';
+import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe } from 'lucide-react';
 
 interface ContactData {
   full_name: string;
@@ -48,6 +48,8 @@ const BusinessCardScanner = () => {
   });
   const [step, setStep] = useState<'upload' | 'review' | 'saved'>('upload');
   const [showContacts, setShowContacts] = useState(false);
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('');
+  const [translationsMade, setTranslationsMade] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -88,7 +90,12 @@ const BusinessCardScanner = () => {
     }
   };
 
-  const extractWithOCR = async (file: File): Promise<{ raw_text: string; parsed: ContactData }> => {
+  const extractWithOCR = async (file: File): Promise<{ 
+    raw_text: string; 
+    parsed: ContactData; 
+    detected_language?: string; 
+    translations_made?: boolean;
+  }> => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('source_user', user?.email || '');
@@ -113,10 +120,17 @@ const BusinessCardScanner = () => {
       const result = await extractWithOCR(selectedFile);
       setRawText(result.raw_text);
       setContactData({ ...result.parsed, source_user: user.email || '' });
+      setDetectedLanguage(result.detected_language || 'English');
+      setTranslationsMade(result.translations_made || false);
       setStep('review');
+      
+      const toastMessage = result.translations_made 
+        ? `Fields extracted and translated from ${result.detected_language} to English`
+        : "Fields extracted successfully";
+      
       toast({
-        title: "Fields extracted successfully",
-        description: "Review and edit the extracted information below."
+        title: "Extraction completed",
+        description: toastMessage
       });
     } catch (error) {
       console.error('OCR extraction error:', error);
@@ -208,6 +222,8 @@ const BusinessCardScanner = () => {
       notes: '',
       source_user: ''
     });
+    setDetectedLanguage('');
+    setTranslationsMade(false);
     setStep('upload');
   };
 
@@ -326,6 +342,18 @@ const BusinessCardScanner = () => {
             <Card className="shadow-card">
               <CardHeader>
                 <CardTitle>Raw OCR Text</CardTitle>
+                {translationsMade && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Globe className="h-4 w-4" />
+                    Translated from {detectedLanguage} to English
+                  </div>
+                )}
+                {!translationsMade && detectedLanguage !== 'English' && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Globe className="h-4 w-4" />
+                    Detected language: {detectedLanguage}
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="bg-muted p-4 rounded-md">

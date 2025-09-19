@@ -81,23 +81,34 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a business card OCR system. Extract text from business cards and parse the information into structured JSON format. 
+            content: `You are a business card OCR system with translation capabilities. Extract text from business cards and parse the information into structured JSON format. 
+
+IMPORTANT: If any text is in a language other than English, translate it to English while preserving the original meaning.
 
 Return your response as a JSON object with:
 1. "raw_text": The complete text you can see on the business card
 2. "parsed": An object with these exact fields (use empty strings if not found):
-   - full_name: person's name
-   - title: job title/position
-   - company: company/organization name
-   - email: email address
-   - phone: phone number (normalize if possible)
-   - address_line: street address
-   - city: city name
-   - state_region: state/province/region
-   - postal_code: zip/postal code
-   - country: country (if specified, otherwise empty)
-   - notes: any additional relevant information
+   - full_name: person's name (translate if not in English)
+   - title: job title/position (translate if not in English)
+   - company: company/organization name (translate if not in English)
+   - email: email address (keep as-is)
+   - phone: phone number (normalize if possible, keep as-is)
+   - address_line: street address (translate if not in English)
+   - city: city name (translate if not in English)
+   - state_region: state/province/region (translate if not in English)
+   - postal_code: zip/postal code (keep as-is)
+   - country: country (translate to English country name)
+   - notes: any additional relevant information (translate if not in English)
    - source_user: (leave empty, will be filled by system)
+3. "detected_language": The primary language detected on the business card (e.g., "Spanish", "French", "Chinese", "English")
+4. "translations_made": true/false - whether any translations were performed
+
+Translation Guidelines:
+- Keep names transliterated (e.g., "李明" → "Li Ming") but translate titles and descriptions
+- Translate job titles, company descriptions, and addresses to English
+- Keep email addresses, phone numbers, and postal codes unchanged
+- For addresses, translate street types and directions (e.g., "Rue" → "Street", "Norte" → "North")
+- If unsure about translation, mark in notes that translation may need verification
 
 Be conservative - only extract information you're confident about. Use empty strings for missing fields.`
           },
@@ -168,12 +179,16 @@ Be conservative - only extract information you're confident about. Use empty str
 
     const result = {
       raw_text: parsedResponse.raw_text || '',
-      parsed: finalParsed
+      parsed: finalParsed,
+      detected_language: parsedResponse.detected_language || 'English',
+      translations_made: parsedResponse.translations_made || false
     };
 
     console.log('Successfully processed OCR:', { 
       raw_text_length: result.raw_text.length,
-      parsed_fields: Object.keys(result.parsed).filter(key => result.parsed[key as keyof ContactData])
+      parsed_fields: Object.keys(result.parsed).filter(key => result.parsed[key as keyof ContactData]),
+      detected_language: result.detected_language,
+      translations_made: result.translations_made
     });
 
     return new Response(JSON.stringify(result), {
