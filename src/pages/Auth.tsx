@@ -97,7 +97,7 @@ const Auth = () => {
                       they return with hundreds of business cards from networking events and thousands of prospect cards from school visits.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                      <div className="p-4 bg-destructive/10 rounded-lg">
+                      <div className="p-4 border border-destructive rounded-lg">
                         <div className="text-2xl font-bold text-destructive mb-2">16 Hours</div>
                         <div className="text-sm text-muted-foreground">Manual data entry for 1,000 prospect cards<br/>(50 seconds per card + breaks)</div>
                       </div>
