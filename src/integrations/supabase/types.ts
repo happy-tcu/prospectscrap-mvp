@@ -17,63 +17,99 @@ export type Database = {
       contacts: {
         Row: {
           address_line: string | null
+          card_type: string | null
           city: string | null
           company: string | null
           country: string | null
+          country_of_citizenship: string | null
           created_at: string
+          current_school: string | null
+          date_of_birth: string | null
           email: string | null
+          email_confirmation: string | null
+          entry_status: string | null
+          first_name: string | null
           full_name: string | null
+          gender: string | null
           id: string
           image_url: string | null
+          last_name: string | null
+          middle_name: string | null
           notes: string | null
           phone: string | null
           postal_code: string | null
+          preferred_first_name: string | null
           raw_ocr_text: string | null
           source_user: string | null
           state_region: string | null
           title: string | null
           updated_at: string
           user_id: string
+          year_entering_university: string | null
         }
         Insert: {
           address_line?: string | null
+          card_type?: string | null
           city?: string | null
           company?: string | null
           country?: string | null
+          country_of_citizenship?: string | null
           created_at?: string
+          current_school?: string | null
+          date_of_birth?: string | null
           email?: string | null
+          email_confirmation?: string | null
+          entry_status?: string | null
+          first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
+          last_name?: string | null
+          middle_name?: string | null
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          preferred_first_name?: string | null
           raw_ocr_text?: string | null
           source_user?: string | null
           state_region?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
+          year_entering_university?: string | null
         }
         Update: {
           address_line?: string | null
+          card_type?: string | null
           city?: string | null
           company?: string | null
           country?: string | null
+          country_of_citizenship?: string | null
           created_at?: string
+          current_school?: string | null
+          date_of_birth?: string | null
           email?: string | null
+          email_confirmation?: string | null
+          entry_status?: string | null
+          first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
+          last_name?: string | null
+          middle_name?: string | null
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          preferred_first_name?: string | null
           raw_ocr_text?: string | null
           source_user?: string | null
           state_region?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
+          year_entering_university?: string | null
         }
         Relationships: []
       }

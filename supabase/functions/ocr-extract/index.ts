@@ -21,6 +21,19 @@ interface ContactData {
   country: string;
   notes: string;
   source_user: string;
+  card_type: string;
+  // Prospect card specific fields
+  gender?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  preferred_first_name?: string;
+  date_of_birth?: string;
+  email_confirmation?: string;
+  country_of_citizenship?: string;  
+  current_school?: string;
+  year_entering_university?: string;
+  entry_status?: string;
 }
 
 serve(async (req) => {
@@ -45,6 +58,7 @@ serve(async (req) => {
     
     const imageFile = formData.get('image') as File;
     const sourceUser = formData.get('source_user') as string || '';
+    const cardType = formData.get('card_type') as string || 'auto';
 
     if (!imageFile) {
       return new Response(JSON.stringify({ error: 'No image file provided' }), {
@@ -81,34 +95,56 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a business card OCR system with translation capabilities. Extract text from business cards and parse the information into structured JSON format. 
+            content: `You are an intelligent card OCR system that can detect and extract information from both business cards and prospect cards (university application forms). First determine the card type, then extract and parse accordingly.
+
+CARD TYPE DETECTION:
+- Business Card: Contains business information like company name, job title, professional contact details
+- Prospect Card: Contains personal/educational information like gender checkboxes, date of birth, school information, university entry details
 
 IMPORTANT: If any text is in a language other than English, translate it to English while preserving the original meaning.
 
 Return your response as a JSON object with:
-1. "raw_text": The complete text you can see on the business card
-2. "parsed": An object with these exact fields (use empty strings if not found):
-   - full_name: person's name (translate if not in English)
-   - title: job title/position (translate if not in English)
-   - company: company/organization name (translate if not in English)
-   - email: email address (keep as-is)
-   - phone: phone number (normalize if possible, keep as-is)
-   - address_line: street address (translate if not in English)
-   - city: city name (translate if not in English)
-   - state_region: state/province/region (translate if not in English)
-   - postal_code: zip/postal code (keep as-is)
-   - country: country (translate to English country name)
-   - notes: any additional relevant information (translate if not in English)
-   - source_user: (leave empty, will be filled by system)
-3. "detected_language": The primary language detected on the business card (e.g., "Spanish", "French", "Chinese", "English")
-4. "translations_made": true/false - whether any translations were performed
+1. "raw_text": The complete text you can see on the card
+2. "card_type": Either "business_card" or "prospect_card" (auto-detected)
+3. "parsed": An object with fields based on card type:
 
-Translation Guidelines:
-- Keep names transliterated (e.g., "李明" → "Li Ming") but translate titles and descriptions
-- Translate job titles, company descriptions, and addresses to English
-- Keep email addresses, phone numbers, and postal codes unchanged
-- For addresses, translate street types and directions (e.g., "Rue" → "Street", "Norte" → "North")
-- If unsure about translation, mark in notes that translation may need verification
+FOR BUSINESS CARDS:
+   - card_type: "business_card"
+   - full_name: person's name
+   - title: job title/position  
+   - company: company/organization name
+   - email: email address
+   - phone: phone number
+   - address_line: street address
+   - city: city name
+   - state_region: state/province/region
+   - postal_code: zip/postal code
+   - country: country
+   - notes: any additional information
+   - source_user: (leave empty)
+
+FOR PROSPECT CARDS:
+   - card_type: "prospect_card"
+   - gender: "Male" or "Female" (from checkbox)
+   - first_name: first/given name
+   - middle_name: middle name
+   - last_name: last/family name
+   - preferred_first_name: preferred name or nickname
+   - date_of_birth: birth date (YYYY-MM-DD format if possible)
+   - email: primary email address
+   - email_confirmation: confirmation email (if different)
+   - country_of_citizenship: country of citizenship
+   - current_school: current school name
+   - year_entering_university: intended university entry year
+   - entry_status: "First Year" or "Transfer"
+   - notes: any additional information
+   - source_user: (leave empty)
+   - full_name: concatenated first + middle + last name for compatibility
+   
+4. "detected_language": The primary language detected
+5. "translations_made": true/false - whether translations were performed
+
+${cardType !== 'auto' ? `USER SPECIFIED CARD TYPE: ${cardType === 'business_card' ? 'Business Card' : 'Prospect Card'} - prioritize this type unless clearly incorrect.` : ''}
 
 Be conservative - only extract information you're confident about. Use empty strings for missing fields.`
           },
@@ -117,7 +153,7 @@ Be conservative - only extract information you're confident about. Use empty str
             content: [
               {
                 type: 'text',
-                text: 'Please extract and parse the information from this business card image.'
+                text: 'Please analyze this image and determine if it\'s a business card or prospect card, then extract and parse the information accordingly.'
               },
               {
                 type: 'image_url',
@@ -160,6 +196,8 @@ Be conservative - only extract information you're confident about. Use empty str
     }
 
     // Ensure all required fields exist in parsed data
+    const detectedCardType = parsedResponse.card_type || 'business_card';
+    
     const defaultParsed: ContactData = {
       full_name: '',
       title: '',
@@ -172,7 +210,20 @@ Be conservative - only extract information you're confident about. Use empty str
       postal_code: '',
       country: '',
       notes: '',
-      source_user: sourceUser
+      source_user: sourceUser,
+      card_type: detectedCardType,
+      // Prospect card fields
+      gender: '',
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      preferred_first_name: '',
+      date_of_birth: '',
+      email_confirmation: '',
+      country_of_citizenship: '',
+      current_school: '',
+      year_entering_university: '',
+      entry_status: ''
     };
 
     const finalParsed = { ...defaultParsed, ...parsedResponse.parsed, source_user: sourceUser };
@@ -181,7 +232,8 @@ Be conservative - only extract information you're confident about. Use empty str
       raw_text: parsedResponse.raw_text || '',
       parsed: finalParsed,
       detected_language: parsedResponse.detected_language || 'English',
-      translations_made: parsedResponse.translations_made || false
+      translations_made: parsedResponse.translations_made || false,
+      card_type: detectedCardType
     };
 
     console.log('Successfully processed OCR:', { 

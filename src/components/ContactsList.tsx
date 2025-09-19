@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Building, Mail, Phone, MapPin, ArrowLeft, Download } from 'lucide-react';
+import { Search, Building, Mail, Phone, MapPin, ArrowLeft, Download, CreditCard, GraduationCap, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface Contact {
@@ -22,6 +23,19 @@ interface Contact {
   country: string;
   notes: string;
   created_at: string;
+  card_type: string;
+  // Prospect card fields
+  gender?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  preferred_first_name?: string;
+  date_of_birth?: string;
+  email_confirmation?: string;
+  country_of_citizenship?: string;
+  current_school?: string;
+  year_entering_university?: string;
+  entry_status?: string;
 }
 
 interface ContactsListProps {
@@ -32,6 +46,7 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'business_card' | 'prospect_card'>('all');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -57,34 +72,69 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
     }
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const exportToExcel = () => {
-    const exportData = contacts.map(contact => ({
-      'Full Name': contact.full_name || '',
-      'Title': contact.title || '',
-      'Company': contact.company || '',
-      'Email': contact.email || '',
-      'Phone': contact.phone || '',
-      'Address': contact.address_line || '',
-      'City': contact.city || '',
-      'State/Region': contact.state_region || '',
-      'Postal Code': contact.postal_code || '',
-      'Country': contact.country || '',
-      'Notes': contact.notes || '',
-      'Date Added': new Date(contact.created_at).toLocaleDateString()
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts');
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = contact.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const fileName = `contacts-${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    const matchesType = cardTypeFilter === 'all' || 
+      (contact.card_type || 'business_card') === cardTypeFilter;
+    
+    return matchesSearch && matchesType;
+  });
+
+  const exportToExcel = (type: 'all' | 'business_card' | 'prospect_card' = 'all') => {
+    const contactsToExport = type === 'all' ? contacts : 
+      contacts.filter(contact => (contact.card_type || 'business_card') === type);
+
+    if (type === 'prospect_card') {
+      const exportData = contactsToExport.map(contact => ({
+        'Gender': contact.gender || '',
+        'First Name': contact.first_name || '',
+        'Middle Name': contact.middle_name || '',
+        'Last Name': contact.last_name || '',
+        'Preferred First Name': contact.preferred_first_name || '',
+        'Date of Birth': contact.date_of_birth || '',
+        'Email': contact.email || '',
+        'Email Confirmation': contact.email_confirmation || '',
+        'Country of Citizenship': contact.country_of_citizenship || '',
+        'Current School': contact.current_school || '',
+        'Year Entering University': contact.year_entering_university || '',
+        'Entry Status': contact.entry_status || '',
+        'Notes': contact.notes || '',
+        'Date Added': new Date(contact.created_at).toLocaleDateString()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Prospect Cards');
+      
+      const fileName = `prospect-cards-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    } else {
+      const exportData = contactsToExport.map(contact => ({
+        'Full Name': contact.full_name || '',
+        'Title': contact.title || '',
+        'Company': contact.company || '',
+        'Email': contact.email || '',
+        'Phone': contact.phone || '',
+        'Address': contact.address_line || '',
+        'City': contact.city || '',
+        'State/Region': contact.state_region || '',
+        'Postal Code': contact.postal_code || '',
+        'Country': contact.country || '',
+        'Notes': contact.notes || '',
+        'Date Added': new Date(contact.created_at).toLocaleDateString()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Business Cards');
+      
+      const filePrefix = type === 'business_card' ? 'business-cards' : 'all-contacts';
+      const fileName = `${filePrefix}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    }
   };
 
   if (loading) {
@@ -110,32 +160,73 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
           </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              My Contacts
+              My Cards
             </h1>
             <p className="text-muted-foreground text-sm sm:text-lg">
-              {contacts.length} saved contact{contacts.length !== 1 ? 's' : ''}
+              {filteredContacts.length} of {contacts.length} card{contacts.length !== 1 ? 's' : ''}
             </p>
           </div>
-          {contacts.length > 0 && (
-            <Button onClick={exportToExcel} variant="outline" size="sm" className="self-start sm:self-center">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Export Excel</span>
-              <span className="sm:hidden">Export</span>
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {contacts.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover border z-50">
+                  <DropdownMenuItem onClick={() => exportToExcel('all')}>
+                    Export All Cards
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportToExcel('business_card')}>
+                    Export Business Cards Only
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportToExcel('prospect_card')}>
+                    Export Prospect Cards Only
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
-        {/* Search */}
+        {/* Search and Filter */}
         <Card className="shadow-card">
           <CardContent className="p-4 sm:p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search contacts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search cards..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="default" className="sm:w-auto w-full">
+                    <Filter className="h-4 w-4 mr-2" />
+                    {cardTypeFilter === 'all' ? 'All Cards' : 
+                     cardTypeFilter === 'business_card' ? 'Business Cards' : 'Prospect Cards'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover border z-50">
+                  <DropdownMenuItem onClick={() => setCardTypeFilter('all')}>
+                    <Filter className="h-4 w-4 mr-2" />
+                    All Cards
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCardTypeFilter('business_card')}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Business Cards
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCardTypeFilter('prospect_card')}>
+                    <GraduationCap className="h-4 w-4 mr-2" />
+                    Prospect Cards
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardContent>
         </Card>
@@ -211,9 +302,22 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
                       <p className="text-xs text-muted-foreground line-clamp-2">{contact.notes}</p>
                     </div>
                   )}
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
                       {new Date(contact.created_at).toLocaleDateString()}
+                    </Badge>
+                    <Badge variant={contact.card_type === 'prospect_card' ? 'default' : 'outline'} className="text-xs">
+                      {contact.card_type === 'prospect_card' ? (
+                        <>
+                          <GraduationCap className="h-3 w-3 mr-1" />
+                          Prospect
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-3 w-3 mr-1" />
+                          Business
+                        </>
+                      )}
                     </Badge>
                   </div>
                 </CardContent>

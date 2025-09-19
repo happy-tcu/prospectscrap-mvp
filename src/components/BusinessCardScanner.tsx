@@ -5,11 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
-import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe } from 'lucide-react';
+import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap } from 'lucide-react';
 
 interface ContactData {
   full_name: string;
@@ -24,6 +30,19 @@ interface ContactData {
   country: string;
   notes: string;
   source_user: string;
+  card_type: string;
+  // Prospect card specific fields
+  gender?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  preferred_first_name?: string;
+  date_of_birth?: string;
+  email_confirmation?: string;
+  country_of_citizenship?: string;
+  current_school?: string;
+  year_entering_university?: string;
+  entry_status?: string;
 }
 
 const BusinessCardScanner = () => {
@@ -42,14 +61,16 @@ const BusinessCardScanner = () => {
     city: '',
     state_region: '',
     postal_code: '',
-    country: '',
-    notes: '',
-    source_user: ''
-  });
+      country: '',
+      notes: '',
+      source_user: '',
+      card_type: 'business_card'
+    });
   const [step, setStep] = useState<'upload' | 'review' | 'saved'>('upload');
   const [showContacts, setShowContacts] = useState(false);
   const [detectedLanguage, setDetectedLanguage] = useState<string>('');
   const [translationsMade, setTranslationsMade] = useState<boolean>(false);
+  const [cardType, setCardType] = useState<'auto' | 'business_card' | 'prospect_card'>('auto');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -95,10 +116,12 @@ const BusinessCardScanner = () => {
     parsed: ContactData; 
     detected_language?: string; 
     translations_made?: boolean;
+    card_type?: string;
   }> => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('source_user', user?.email || '');
+    formData.append('card_type', cardType);
 
     const { data, error } = await supabase.functions.invoke('ocr-extract', {
       body: formData
@@ -124,9 +147,10 @@ const BusinessCardScanner = () => {
       setTranslationsMade(result.translations_made || false);
       setStep('review');
       
+      const cardTypeText = result.parsed.card_type === 'prospect_card' ? 'prospect card' : 'business card';
       const toastMessage = result.translations_made 
-        ? `Fields extracted and translated from ${result.detected_language} to English`
-        : "Fields extracted successfully";
+        ? `${cardTypeText} extracted and translated from ${result.detected_language} to English`
+        : `${cardTypeText} extracted successfully`;
       
       toast({
         title: "Extraction completed",
@@ -136,7 +160,7 @@ const BusinessCardScanner = () => {
       console.error('OCR extraction error:', error);
       toast({
         title: "Extraction failed",
-        description: "Could not extract fields from the business card. Please try again.",
+        description: "Could not extract fields from the card. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -189,7 +213,7 @@ const BusinessCardScanner = () => {
 
       toast({
         title: "Contact saved successfully",
-        description: "The business card information has been added to your database."
+        description: `The ${contactData.card_type === 'prospect_card' ? 'prospect card' : 'business card'} information has been added to your database.`
       });
       setStep('saved');
     } catch (error) {
@@ -220,10 +244,12 @@ const BusinessCardScanner = () => {
       postal_code: '',
       country: '',
       notes: '',
-      source_user: ''
+      source_user: '',
+      card_type: 'business_card'
     });
     setDetectedLanguage('');
     setTranslationsMade(false);
+    setCardType('auto');
     setStep('upload');
   };
 
@@ -234,10 +260,10 @@ const BusinessCardScanner = () => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 py-4 sm:py-8">
           <div className="text-center sm:text-left flex-1">
             <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-              Business Card Scanner
+              Card Scanner
             </h1>
             <p className="text-muted-foreground text-sm sm:text-lg">
-              Capture, extract, and save contact information instantly
+              Capture business cards and prospect forms instantly
             </p>
           </div>
           <div className="flex gap-2 justify-center sm:justify-end">
@@ -278,10 +304,38 @@ const BusinessCardScanner = () => {
             <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Scan className="h-4 w-4 sm:h-5 sm:w-5" />
-                Scan Business Card
+                Scan Card
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
+              {/* Card Type Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Card Type</Label>
+                <RadioGroup value={cardType} onValueChange={(value) => setCardType(value as 'auto' | 'business_card' | 'prospect_card')} className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="auto" id="auto" />
+                    <Label htmlFor="auto" className="flex items-center gap-2 cursor-pointer">
+                      <Scan className="h-4 w-4" />
+                      Auto-detect
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="business_card" id="business" />
+                    <Label htmlFor="business" className="flex items-center gap-2 cursor-pointer">
+                      <CreditCard className="h-4 w-4" />
+                      Business Card
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="prospect_card" id="prospect" />
+                    <Label htmlFor="prospect" className="flex items-center gap-2 cursor-pointer">
+                      <GraduationCap className="h-4 w-4" />
+                      Prospect Card
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               {!selectedFile ? (
                 <div className="flex flex-col gap-3 sm:gap-4">
                   <Button
@@ -372,124 +426,279 @@ const BusinessCardScanner = () => {
                 <CardTitle className="text-lg sm:text-xl">Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <Label htmlFor="full_name" className="flex items-center gap-2 text-sm">
-                      <User className="h-3 w-3 sm:h-4 sm:w-4" />
-                      Full Name
-                    </Label>
-                    <Input
-                      id="full_name"
-                      value={contactData.full_name}
-                      onChange={(e) => handleInputChange('full_name', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="title" className="text-sm">Title</Label>
-                    <Input
-                      id="title"
-                      value={contactData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+                {contactData.card_type === 'prospect_card' ? (
+                  /* Prospect Card Form */
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <Label className="text-sm">Gender</Label>
+                        <RadioGroup value={contactData.gender || ''} onValueChange={(value) => handleInputChange('gender', value)} className="flex gap-4 mt-1">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Male" id="male" />
+                            <Label htmlFor="male" className="cursor-pointer">Male</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Female" id="female" />
+                            <Label htmlFor="female" className="cursor-pointer">Female</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
 
-                <div>
-                  <Label htmlFor="company" className="flex items-center gap-2 text-sm">
-                    <Building className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Company
-                  </Label>
-                  <Input
-                    id="company"
-                    value={contactData.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      <div>
+                        <Label htmlFor="first_name" className="text-sm">First Name (Given)</Label>
+                        <Input
+                          id="first_name"
+                          value={contactData.first_name || ''}
+                          onChange={(e) => handleInputChange('first_name', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="middle_name" className="text-sm">Middle Name</Label>
+                        <Input
+                          id="middle_name"
+                          value={contactData.middle_name || ''}
+                          onChange={(e) => handleInputChange('middle_name', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="last_name" className="text-sm">Last Name (Family)</Label>
+                        <Input
+                          id="last_name"
+                          value={contactData.last_name || ''}
+                          onChange={(e) => handleInputChange('last_name', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <Label htmlFor="email" className="flex items-center gap-2 text-sm">
-                      <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={contactData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                      <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                      Phone
-                    </Label>
-                    <Input
-                      id="phone"
-                      value={contactData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+                    <div>
+                      <Label htmlFor="preferred_first_name" className="text-sm">Preferred First Name</Label>
+                      <Input
+                        id="preferred_first_name"
+                        value={contactData.preferred_first_name || ''}
+                        onChange={(e) => handleInputChange('preferred_first_name', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="address_line" className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Address
-                  </Label>
-                  <Input
-                    id="address_line"
-                    value={contactData.address_line}
-                    onChange={(e) => handleInputChange('address_line', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                    <div>
+                      <Label className="text-sm">Date of Birth</Label>
+                      <Input
+                        value={contactData.date_of_birth || ''}
+                        onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                        placeholder="MM/DD/YYYY"
+                        className="mt-1"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <Label htmlFor="city" className="text-sm">City</Label>
-                    <Input
-                      id="city"
-                      value={contactData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state_region" className="text-sm">State</Label>
-                    <Input
-                      id="state_region"
-                      value={contactData.state_region}
-                      onChange={(e) => handleInputChange('state_region', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="postal_code" className="text-sm">ZIP Code</Label>
-                    <Input
-                      id="postal_code"
-                      value={contactData.postal_code}
-                      onChange={(e) => handleInputChange('postal_code', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                          <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={contactData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email_confirmation" className="text-sm">Confirm Email</Label>
+                        <Input
+                          id="email_confirmation"
+                          type="email"
+                          value={contactData.email_confirmation || ''}
+                          onChange={(e) => handleInputChange('email_confirmation', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <Label htmlFor="notes" className="text-sm">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={contactData.notes}
-                    onChange={(e) => handleInputChange('notes', e.target.value)}
-                    rows={3}
-                    className="mt-1"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="country_of_citizenship" className="text-sm">Country of Citizenship</Label>
+                      <Input
+                        id="country_of_citizenship"
+                        value={contactData.country_of_citizenship || ''}
+                        onChange={(e) => handleInputChange('country_of_citizenship', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="current_school" className="text-sm">Current School</Label>
+                      <Input
+                        id="current_school"
+                        value={contactData.current_school || ''}
+                        onChange={(e) => handleInputChange('current_school', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="year_entering_university" className="text-sm">Year Entering University</Label>
+                      <Input
+                        id="year_entering_university"
+                        value={contactData.year_entering_university || ''}
+                        onChange={(e) => handleInputChange('year_entering_university', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-sm">Entry Status</Label>
+                      <RadioGroup value={contactData.entry_status || ''} onValueChange={(value) => handleInputChange('entry_status', value)} className="flex gap-4 mt-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="First Year" id="first_year" />
+                          <Label htmlFor="first_year" className="cursor-pointer">First Year</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="Transfer" id="transfer" />
+                          <Label htmlFor="transfer" className="cursor-pointer">Transfer</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes" className="text-sm">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        value={contactData.notes}
+                        onChange={(e) => handleInputChange('notes', e.target.value)}
+                        rows={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  /* Business Card Form */
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <Label htmlFor="full_name" className="flex items-center gap-2 text-sm">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                          Full Name
+                        </Label>
+                        <Input
+                          id="full_name"
+                          value={contactData.full_name}
+                          onChange={(e) => handleInputChange('full_name', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="title" className="text-sm">Title</Label>
+                        <Input
+                          id="title"
+                          value={contactData.title}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="company" className="flex items-center gap-2 text-sm">
+                        <Building className="h-3 w-3 sm:h-4 sm:w-4" />
+                        Company
+                      </Label>
+                      <Input
+                        id="company"
+                        value={contactData.company}
+                        onChange={(e) => handleInputChange('company', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                          <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={contactData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
+                          <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                          Phone
+                        </Label>
+                        <Input
+                          id="phone"
+                          value={contactData.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="address_line" className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                        Address
+                      </Label>
+                      <Input
+                        id="address_line"
+                        value={contactData.address_line}
+                        onChange={(e) => handleInputChange('address_line', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      <div>
+                        <Label htmlFor="city" className="text-sm">City</Label>
+                        <Input
+                          id="city"
+                          value={contactData.city}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="state_region" className="text-sm">State</Label>
+                        <Input
+                          id="state_region"
+                          value={contactData.state_region}
+                          onChange={(e) => handleInputChange('state_region', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="postal_code" className="text-sm">ZIP Code</Label>
+                        <Input
+                          id="postal_code"
+                          value={contactData.postal_code}
+                          onChange={(e) => handleInputChange('postal_code', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes" className="text-sm">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        value={contactData.notes}
+                        onChange={(e) => handleInputChange('notes', e.target.value)}
+                        rows={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <Button
