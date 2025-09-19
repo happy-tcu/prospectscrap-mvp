@@ -87,6 +87,34 @@ const Auth = () => {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-6 py-4">
+                {/* Problem & Inspiration */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">The Problem & Our Inspiration</h3>
+                  <div className="bg-muted/30 p-4 rounded-lg space-y-4">
+                    <p className="text-muted-foreground">
+                      <strong className="text-foreground">Admission counselors are relationship builders.</strong> They travel extensively, 
+                      attending conferences and visiting schools to recruit the next generation of students. In the process, 
+                      they return with hundreds of business cards from networking events and thousands of prospect cards from school visits.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                      <div className="p-4 bg-destructive/10 rounded-lg">
+                        <div className="text-2xl font-bold text-destructive mb-2">16 Hours</div>
+                        <div className="text-sm text-muted-foreground">Manual data entry for 1,000 prospect cards<br/>(50 seconds per card + breaks)</div>
+                      </div>
+                      <div className="p-4 bg-success/10 rounded-lg">
+                        <div className="text-2xl font-bold text-success mb-2">1 Hour</div>
+                        <div className="text-sm text-muted-foreground">With Prospect Scrap automated processing<br/>(5 seconds per card)</div>
+                      </div>
+                    </div>
+                    <div className="text-center p-3 bg-primary/10 rounded-lg">
+                      <div className="font-semibold text-primary">Result: 15 hours saved per 1,000 cards</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        More time for relationship building, professional development, and strategic initiatives
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* What it does */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">What does Prospect Scrap do?</h3>
