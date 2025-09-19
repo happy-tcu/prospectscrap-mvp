@@ -118,18 +118,27 @@ const BusinessCardScanner = () => {
     translations_made?: boolean;
     card_type?: string;
   }> => {
+    console.log('Starting OCR extraction for file:', file.name, 'size:', file.size);
     const formData = new FormData();
     formData.append('image', file);
     formData.append('source_user', user?.email || '');
     formData.append('card_type', cardType);
 
+    console.log('Calling ocr-extract function...');
     const { data, error } = await supabase.functions.invoke('ocr-extract', {
       body: formData
     });
 
+    console.log('OCR function response:', { data, error });
+
     if (error) {
-      console.error('OCR Error:', error);
+      console.error('OCR Error details:', error);
       throw new Error(error.message || 'OCR extraction failed');
+    }
+
+    if (!data) {
+      console.error('No data returned from OCR function');
+      throw new Error('No data returned from OCR extraction');
     }
 
     return data;
@@ -158,9 +167,11 @@ const BusinessCardScanner = () => {
       });
     } catch (error) {
       console.error('OCR extraction error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error details:', errorMessage);
       toast({
         title: "Extraction failed",
-        description: "Could not extract fields from the card. Please try again.",
+        description: `Could not extract fields from the card: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {

@@ -43,6 +43,14 @@ serve(async (req) => {
   }
 
   try {
+    if (!openAIApiKey) {
+      console.error('OPENAI_API_KEY is not configured');
+      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('OCR request received, method:', req.method);
     
     let formData;
@@ -172,7 +180,7 @@ Be conservative - only extract information you're confident about. Use empty str
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error:', response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
