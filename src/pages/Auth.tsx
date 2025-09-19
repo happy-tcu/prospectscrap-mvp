@@ -56,36 +56,57 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4">
-      <div className="max-w-md w-full space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-20 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-float"></div>
+        <div className="absolute bottom-32 right-20 w-40 h-40 bg-secondary/10 rounded-full blur-xl animate-float" style={{animationDelay: '1s'}}></div>
+        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-accent/10 rounded-full blur-xl animate-float" style={{animationDelay: '2s'}}></div>
+      </div>
+
+      <div className="max-w-md w-full space-y-4 sm:space-y-6 relative z-10">
         {/* Header */}
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-primary rounded-xl mb-4">
-            <Scan className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+        <div className="text-center animate-fade-in">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-hero rounded-2xl mb-6 shadow-cyberpunk float-animation">
+            <Scan className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-            Business Card Scanner
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-3 neon-text">
+            Scanner Pro
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Sign in to start scanning and managing your contacts
+            Advanced OCR scanning with AI intelligence
           </p>
         </div>
 
-        <Card className="shadow-card">
-          <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-            <CardTitle className="text-center text-lg sm:text-xl">Welcome Back</CardTitle>
+        <div className="cyber-card rounded-2xl animate-scale-in" style={{animationDelay: '0.2s'}}>
+          <CardHeader className="px-6 sm:px-8 py-6 sm:py-8">
+            <CardTitle className="text-center text-xl sm:text-2xl bg-gradient-primary bg-clip-text text-transparent">
+              Access Terminal
+            </CardTitle>
           </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-primary/20">
+                <TabsTrigger 
+                  value="signin" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all duration-300"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-glow transition-all duration-300"
+                >
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">
+              <TabsContent value="signin" className="animate-fade-in">
+                <form onSubmit={handleSignIn} className="space-y-4 sm:space-y-5">
                   <div>
-                    <Label htmlFor="signin-email" className="text-sm">Email</Label>
+                    <Label htmlFor="signin-email" className="text-sm font-medium text-foreground/90">
+                      Email Address
+                    </Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -93,11 +114,14 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="mt-1"
+                      className="mt-2 bg-muted/30 border-primary/30 focus:border-primary focus:ring-primary/50 transition-all duration-300 hover:border-primary/50"
+                      placeholder="Enter your email"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signin-password" className="text-sm">Password</Label>
+                    <Label htmlFor="signin-password" className="text-sm font-medium text-foreground/90">
+                      Password
+                    </Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -105,26 +129,33 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="mt-1"
+                      className="mt-2 bg-muted/30 border-primary/30 focus:border-primary focus:ring-primary/50 transition-all duration-300 hover:border-primary/50"
+                      placeholder="Enter your password"
                     />
                   </div>
-                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 sm:h-12 bg-gradient-primary hover:bg-gradient-neon text-primary-foreground shadow-glow hover:shadow-neon transition-all duration-300 font-semibold" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Signing In...
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Authenticating...
                       </>
                     ) : (
-                      'Sign In'
+                      'Access System'
                     )}
                   </Button>
                 </form>
               </TabsContent>
               
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-3 sm:space-y-4">
+              <TabsContent value="signup" className="animate-fade-in">
+                <form onSubmit={handleSignUp} className="space-y-4 sm:space-y-5">
                   <div>
-                    <Label htmlFor="signup-email" className="text-sm">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm font-medium text-foreground/90">
+                      Email Address
+                    </Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -132,11 +163,14 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="mt-1"
+                      className="mt-2 bg-muted/30 border-secondary/30 focus:border-secondary focus:ring-secondary/50 transition-all duration-300 hover:border-secondary/50"
+                      placeholder="Enter your email"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password" className="text-sm">Password</Label>
+                    <Label htmlFor="signup-password" className="text-sm font-medium text-foreground/90">
+                      Password
+                    </Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -145,11 +179,14 @@ const Auth = () => {
                       required
                       disabled={isLoading}
                       minLength={6}
-                      className="mt-1"
+                      className="mt-2 bg-muted/30 border-secondary/30 focus:border-secondary focus:ring-secondary/50 transition-all duration-300 hover:border-secondary/50"
+                      placeholder="Create a password (min. 6 chars)"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password" className="text-sm">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-sm font-medium text-foreground/90">
+                      Confirm Password
+                    </Label>
                     <Input
                       id="confirm-password"
                       type="password"
@@ -158,33 +195,39 @@ const Auth = () => {
                       required
                       disabled={isLoading}
                       minLength={6}
-                      className="mt-1"
+                      className="mt-2 bg-muted/30 border-secondary/30 focus:border-secondary focus:ring-secondary/50 transition-all duration-300 hover:border-secondary/50"
+                      placeholder="Confirm your password"
                     />
                     {password !== confirmPassword && confirmPassword && (
-                      <p className="text-xs sm:text-sm text-destructive mt-1">
-                        Passwords don't match
+                      <p className="text-xs sm:text-sm text-destructive mt-2 animate-fade-in">
+                        ⚠️ Passwords don't match
                       </p>
                     )}
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-10 sm:h-11" 
+                    className="w-full h-12 sm:h-12 bg-gradient-primary hover:bg-gradient-neon text-primary-foreground shadow-glow hover:shadow-neon transition-all duration-300 font-semibold" 
                     disabled={isLoading || password !== confirmPassword}
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                         Creating Account...
                       </>
                     ) : (
-                      'Create Account'
+                      'Initialize Account'
                     )}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
-        </Card>
+        </div>
+
+        {/* Footer text */}
+        <p className="text-center text-xs text-muted-foreground/70 animate-fade-in" style={{animationDelay: '0.4s'}}>
+          Secure • Encrypted • Future-Ready
+        </p>
       </div>
     </div>
   );
