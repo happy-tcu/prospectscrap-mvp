@@ -101,7 +101,7 @@ const Auth = () => {
                         <div className="text-2xl font-bold text-destructive mb-2">16 Hours</div>
                         <div className="text-sm text-muted-foreground">Manual data entry for 1,000 prospect cards<br/>(50 seconds per card + breaks)</div>
                       </div>
-                      <div className="p-4 bg-success/10 rounded-lg">
+                      <div className="p-4 border border-success rounded-lg">
                         <div className="text-2xl font-bold text-success mb-2">1 Hour</div>
                         <div className="text-sm text-muted-foreground">With Prospect Scrap automated processing<br/>(5 seconds per card)</div>
                       </div>
