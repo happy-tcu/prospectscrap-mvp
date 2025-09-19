@@ -254,28 +254,21 @@ const BusinessCardScanner = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-3 sm:p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-float"></div>
-        <div className="absolute bottom-32 right-20 w-40 h-40 bg-secondary/10 rounded-full blur-xl animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-accent/10 rounded-full blur-xl animate-float" style={{animationDelay: '2s'}}></div>
-      </div>
-
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 relative z-10">
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 py-4 sm:py-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 py-8">
           <div className="text-center sm:text-left flex-1">
             <div className="inline-flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-gradient-cyberpunk rounded-xl flex items-center justify-center shadow-neon animate-glow-rotate">
-                <Scan className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Scan className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-hero bg-clip-text text-transparent neon-text">
-                Neural Scanner
+              <h1 className="text-4xl font-bold text-foreground">
+                Card Scanner
               </h1>
             </div>
-            <p className="text-muted-foreground text-sm sm:text-lg">
-              AI-powered OCR with quantum processing capabilities
+            <p className="text-muted-foreground">
+              Scan and manage your business cards and contacts
             </p>
           </div>
           <div className="flex gap-3 justify-center sm:justify-end">
@@ -283,20 +276,20 @@ const BusinessCardScanner = () => {
               onClick={() => setShowContacts(true)} 
               variant="outline" 
               size="sm"
-              className="flex-1 sm:flex-none bg-muted/30 border-primary/30 hover:bg-primary/10 hover:border-primary transition-all duration-300 hover:shadow-glow"
+              className="flex-1 sm:flex-none"
             >
               <List className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline ml-2">Neural Database</span>
-              <span className="sm:hidden ml-2">Database</span>
+              <span className="hidden sm:inline ml-2">My Contacts</span>
+              <span className="sm:hidden ml-2">Contacts</span>
             </Button>
             <Button 
               onClick={signOut} 
               variant="outline" 
               size="sm"
-              className="flex-1 sm:flex-none bg-muted/30 border-destructive/30 hover:bg-destructive/10 hover:border-destructive transition-all duration-300"
+              className="flex-1 sm:flex-none"
             >
               <LogOut className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline ml-2">Disconnect</span>
+              <span className="hidden sm:inline ml-2">Sign Out</span>
               <span className="sm:hidden ml-2">Exit</span>
             </Button>
           </div>
@@ -312,38 +305,36 @@ const BusinessCardScanner = () => {
         />
 
         {step === 'upload' && (
-          <div className="cyber-card rounded-2xl animate-scale-in">
-            <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-              <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <Scan className="h-4 w-4 text-white" />
-                </div>
-                Initialize Scan Protocol
+          <Card className="border shadow-sm">
+            <CardHeader className="px-6 py-6">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <Scan className="h-5 w-5" />
+                Scan Card
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="space-y-6 px-6 pb-6">
               {/* Card Type Selection */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium text-foreground/90">Target Classification</Label>
+                <Label className="text-sm font-medium">Card Type</Label>
                 <RadioGroup value={cardType} onValueChange={(value) => setCardType(value as 'auto' | 'business_card' | 'prospect_card')} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
                     <RadioGroupItem value="auto" id="auto" />
                     <Label htmlFor="auto" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Scan className="h-4 w-4 text-primary" />
+                      <Scan className="h-4 w-4" />
                       Auto-detect
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-secondary/30 hover:border-secondary/60 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
                     <RadioGroupItem value="business_card" id="business" />
                     <Label htmlFor="business" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <CreditCard className="h-4 w-4 text-secondary" />
+                      <CreditCard className="h-4 w-4" />
                       Business Card
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-accent/30 hover:border-accent/60 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
                     <RadioGroupItem value="prospect_card" id="prospect" />
                     <Label htmlFor="prospect" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <GraduationCap className="h-4 w-4 text-accent" />
+                      <GraduationCap className="h-4 w-4" />
                       Prospect Card
                     </Label>
                   </div>
@@ -351,65 +342,59 @@ const BusinessCardScanner = () => {
               </div>
 
               {!selectedFile ? (
-                <div className="flex flex-col gap-4 sm:gap-6">
-                  <div className="text-center py-8 border-2 border-dashed border-primary/30 rounded-2xl bg-gradient-card hover:border-primary/60 transition-all duration-300">
-                    <div className="w-16 h-16 bg-gradient-cyberpunk rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-glow animate-float">
-                      <Camera className="h-8 w-8 text-white" />
-                    </div>
-                    <p className="text-muted-foreground mb-6">Ready to capture digital intelligence</p>
-                    <div className="flex flex-col gap-3 px-4">
-                      <Button
-                        onClick={handleCameraCapture}
-                        size="lg"
-                        className="w-full h-14 bg-gradient-primary hover:bg-gradient-neon shadow-glow hover:shadow-neon transition-all duration-300 font-semibold"
-                      >
-                        <Camera className="h-5 w-5 mr-2" />
-                        Activate Scanner
-                      </Button>
-                      <Button
-                        onClick={handleFileUpload}
-                        variant="outline"
-                        size="lg"
-                        className="w-full h-14 bg-muted/20 border-secondary/30 hover:border-secondary hover:bg-secondary/10 transition-all duration-300"
-                      >
-                        <Upload className="h-5 w-5 mr-2" />
-                        Upload from Archive
-                      </Button>
-                    </div>
+                <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+                  <Camera className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-6">Upload an image or take a photo to get started</p>
+                  <div className="flex flex-col gap-3 px-4 max-w-sm mx-auto">
+                    <Button
+                      onClick={handleCameraCapture}
+                      size="lg"
+                      className="w-full"
+                    >
+                      <Camera className="h-5 w-5 mr-2" />
+                      Take Photo
+                    </Button>
+                    <Button
+                      onClick={handleFileUpload}
+                      variant="outline"
+                      size="lg"
+                      className="w-full"
+                    >
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload Image
+                    </Button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 sm:space-y-6 animate-fade-in">
-                  <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-card shadow-cyberpunk">
-                    <div className="absolute inset-0 bg-gradient-neon opacity-10"></div>
+                <div className="space-y-4">
+                  <div className="relative overflow-hidden rounded-lg border bg-muted/20">
                     <img
                       src={previewUrl}
                       alt="Scanned document preview"
-                      className="relative w-full h-48 sm:h-64 object-contain z-10"
+                      className="w-full h-64 object-contain"
                     />
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       onClick={handleExtractFields}
                       disabled={isProcessing}
-                      className="flex-1 bg-gradient-primary hover:bg-gradient-neon shadow-glow hover:shadow-neon transition-all duration-300 font-semibold"
+                      className="flex-1"
                     >
                       {isProcessing ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing Neural Network...
+                          Processing...
                         </>
                       ) : (
                         <>
                           <FileText className="h-4 w-4 mr-2" />
-                          Initiate Quantum Analysis
+                          Extract Data
                         </>
                       )}
                     </Button>
                     <Button 
                       onClick={handleReset} 
-                      variant="outline" 
-                      className="bg-muted/20 border-muted-foreground/30 hover:border-muted-foreground hover:bg-muted/40 transition-all duration-300"
+                      variant="outline"
                     >
                       Reset
                     </Button>
@@ -417,51 +402,47 @@ const BusinessCardScanner = () => {
                 </div>
               )}
             </CardContent>
-          </div>
+          </Card>
         )}
 
         {step === 'review' && (
-          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 animate-fade-in">
+          <div className="grid lg:grid-cols-2 gap-6">
             {/* Raw OCR Text */}
-            <div className="cyber-card rounded-2xl">
-              <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-                <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-                  <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-white" />
-                  </div>
-                  Neural Network Output
+            <Card className="border shadow-sm">
+              <CardHeader className="px-6 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <FileText className="h-5 w-5" />
+                  Extracted Text
                 </CardTitle>
                 {translationsMade && (
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-accent">
-                    <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <div className="flex items-center gap-2 text-sm text-success">
+                    <Globe className="h-4 w-4" />
                     Translated from {detectedLanguage} to English
                   </div>
                 )}
                 {!translationsMade && detectedLanguage !== 'English' && (
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                    <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Globe className="h-4 w-4" />
                     Detected language: {detectedLanguage}
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-                <div className="bg-muted/30 p-4 rounded-xl border border-primary/20 shadow-inner">
-                  <pre className="whitespace-pre-wrap text-xs sm:text-sm text-foreground/90 font-mono">{rawText}</pre>
+              <CardContent className="px-6 pb-6">
+                <div className="bg-muted/50 p-4 rounded-lg border">
+                  <pre className="whitespace-pre-wrap text-sm font-mono">{rawText}</pre>
                 </div>
               </CardContent>
-            </div>
+            </Card>
 
             {/* Editable Fields */}
-            <div className="cyber-card rounded-2xl">
-              <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-                <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-                  <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  Data Configuration
+            <Card className="border shadow-sm">
+              <CardHeader className="px-6 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <User className="h-5 w-5" />
+                  Contact Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-4 sm:pb-6">
+              <CardContent className="space-y-5 px-6 pb-6">
                 {contactData.card_type === 'prospect_card' ? (
                   /* Prospect Card Form */
                   <>
@@ -736,57 +717,56 @@ const BusinessCardScanner = () => {
                   </>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex-1 bg-gradient-primary hover:bg-gradient-neon shadow-glow hover:shadow-neon transition-all duration-300 font-semibold"
+                    className="flex-1"
                   >
                     {isSaving ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading to Database...
+                        Saving...
                       </>
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Commit to Neural Network
+                        Save Contact
                       </>
                     )}
                   </Button>
                   <Button 
                     onClick={handleReset} 
-                    variant="outline" 
-                    className="bg-muted/20 border-muted-foreground/30 hover:border-muted-foreground hover:bg-muted/40 transition-all duration-300"
+                    variant="outline"
                   >
-                    Abort
+                    Cancel
                   </Button>
                 </div>
               </CardContent>
-            </div>
+            </Card>
           </div>
         )}
 
         {step === 'saved' && (
-          <div className="cyber-card rounded-2xl text-center animate-scale-in">
-            <CardContent className="py-12 sm:py-16 px-4 sm:px-6">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-glow animate-float">
-                <Save className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+          <Card className="border shadow-sm text-center">
+            <CardContent className="py-12 px-6">
+              <div className="w-16 h-16 bg-success rounded-lg flex items-center justify-center mx-auto mb-6">
+                <Save className="h-8 w-8 text-success-foreground" />
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold mb-3 bg-gradient-primary bg-clip-text text-transparent">
-                Neural Upload Complete!
+              <h3 className="text-2xl font-bold mb-3 text-foreground">
+                Contact Saved Successfully!
               </h3>
-              <p className="text-muted-foreground mb-8 text-sm sm:text-base max-w-md mx-auto">
-                Data has been successfully integrated into the quantum database matrix.
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                The contact information has been saved to your database.
               </p>
               <Button 
                 onClick={handleReset} 
-                className="px-8 sm:px-12 bg-gradient-primary hover:bg-gradient-neon shadow-glow hover:shadow-neon transition-all duration-300 font-semibold"
+                className="px-8"
               >
-                Initialize New Scan
+                Scan Another Card
               </Button>
             </CardContent>
-          </div>
+          </Card>
         )}
       </div>
     </div>
