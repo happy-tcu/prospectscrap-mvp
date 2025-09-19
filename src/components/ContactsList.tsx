@@ -99,37 +99,39 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-4">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 py-8">
-          <Button onClick={onBack} variant="outline" size="sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-4 sm:py-8">
+          <Button onClick={onBack} variant="outline" size="sm" className="self-start sm:self-center">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Scanner
+            <span className="hidden sm:inline">Back to Scanner</span>
+            <span className="sm:hidden">Back</span>
           </Button>
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               My Contacts
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-sm sm:text-lg">
               {contacts.length} saved contact{contacts.length !== 1 ? 's' : ''}
             </p>
           </div>
           {contacts.length > 0 && (
-            <Button onClick={exportToExcel} variant="outline" size="sm">
+            <Button onClick={exportToExcel} variant="outline" size="sm" className="self-start sm:self-center">
               <Download className="h-4 w-4 mr-2" />
-              Export Excel
+              <span className="hidden sm:inline">Export Excel</span>
+              <span className="sm:hidden">Export</span>
             </Button>
           )}
         </div>
 
         {/* Search */}
         <Card className="shadow-card">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search contacts by name, company, or email..."
+                placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -141,8 +143,8 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
         {/* Contacts Grid */}
         {filteredContacts.length === 0 ? (
           <Card className="shadow-card">
-            <CardContent className="py-12 text-center">
-              <div className="text-muted-foreground">
+            <CardContent className="py-8 sm:py-12 text-center px-4 sm:px-6">
+              <div className="text-muted-foreground text-sm sm:text-base">
                 {searchTerm ? 'No contacts found matching your search.' : 'No contacts saved yet.'}
               </div>
               {!searchTerm && (
@@ -153,17 +155,17 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredContacts.map((contact) => (
               <Card key={contact.id} className="shadow-card hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-foreground">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base sm:text-lg font-semibold text-foreground truncate">
                         {contact.full_name || 'Unknown Name'}
                       </CardTitle>
                       {contact.title && (
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                           {contact.title}
                         </p>
                       )}
@@ -171,31 +173,31 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
                   </div>
                   {contact.company && (
                     <div className="flex items-center gap-2 mt-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{contact.company}</span>
+                      <Building className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium truncate">{contact.company}</span>
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2 sm:space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
                   {contact.email && (
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground truncate">{contact.email}</span>
+                      <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs sm:text-sm text-foreground truncate">{contact.email}</span>
                     </div>
                   )}
                   {contact.phone && (
                     <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{contact.phone}</span>
+                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs sm:text-sm text-foreground">{contact.phone}</span>
                     </div>
                   )}
                   {(contact.address_line || contact.city || contact.state_region) && (
                     <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div className="text-sm text-foreground">
-                        {contact.address_line && <div>{contact.address_line}</div>}
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="text-xs sm:text-sm text-foreground min-w-0">
+                        {contact.address_line && <div className="truncate">{contact.address_line}</div>}
                         {(contact.city || contact.state_region || contact.postal_code) && (
-                          <div>
+                          <div className="truncate">
                             {[contact.city, contact.state_region, contact.postal_code]
                               .filter(Boolean)
                               .join(', ')}
@@ -205,8 +207,8 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
                     </div>
                   )}
                   {contact.notes && (
-                    <div className="mt-3 p-2 bg-muted rounded-md">
-                      <p className="text-xs text-muted-foreground">{contact.notes}</p>
+                    <div className="mt-2 sm:mt-3 p-2 bg-muted rounded-md">
+                      <p className="text-xs text-muted-foreground line-clamp-2">{contact.notes}</p>
                     </div>
                   )}
                   <div className="pt-2 border-t">
