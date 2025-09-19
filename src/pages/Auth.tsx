@@ -106,7 +106,7 @@ const Auth = () => {
                         <div className="text-sm text-muted-foreground">With Prospect Scrap automated processing<br/>(5 seconds per card)</div>
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-primary/10 rounded-lg">
+                    <div className="text-center p-3 border border-foreground rounded-lg">
                       <div className="font-semibold text-primary">Result: 15 hours saved per 1,000 cards</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         More time for relationship building, professional development, and strategic initiatives
