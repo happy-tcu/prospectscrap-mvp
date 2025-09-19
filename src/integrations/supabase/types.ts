@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          image_url: string | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          raw_ocr_text: string | null
+          source_user: string | null
+          state_region: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          raw_ocr_text?: string | null
+          source_user?: string | null
+          state_region?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          raw_ocr_text?: string | null
+          source_user?: string | null
+          state_region?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           created_at: string
