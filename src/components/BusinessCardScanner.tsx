@@ -263,12 +263,12 @@ const BusinessCardScanner = () => {
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Scan className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-4xl font-bold text-foreground">
-                Card Scanner
-              </h1>
+            <h1 className="text-4xl font-bold text-foreground">
+              Prospect Scrap
+            </h1>
             </div>
             <p className="text-muted-foreground">
-              Scan and manage your business cards and contacts
+              Scan and manage your business cards and prospects
             </p>
           </div>
           <div className="flex gap-3 justify-center sm:justify-end">
