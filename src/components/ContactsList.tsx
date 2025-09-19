@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Building, Mail, Phone, MapPin, ArrowLeft, Download, CreditCard, GraduationCap, Filter } from 'lucide-react';
+import { Search, Building, Mail, Phone, MapPin, ArrowLeft, Download, CreditCard, GraduationCap, Filter, Edit, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface Contact {
@@ -22,6 +22,7 @@ interface Contact {
   postal_code: string;
   country: string;
   notes: string;
+  source_user: string;
   created_at: string;
   card_type: string;
   // Prospect card fields
@@ -40,9 +41,10 @@ interface Contact {
 
 interface ContactsListProps {
   onBack: () => void;
+  onEditContact?: (contact: Contact) => void;
 }
 
-const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
+const ContactsList: React.FC<ContactsListProps> = ({ onBack, onEditContact }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -302,23 +304,38 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack }) => {
                       <p className="text-xs text-muted-foreground line-clamp-2">{contact.notes}</p>
                     </div>
                   )}
-                  <div className="pt-2 border-t flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      {new Date(contact.created_at).toLocaleDateString()}
-                    </Badge>
-                    <Badge variant={contact.card_type === 'prospect_card' ? 'default' : 'outline'} className="text-xs">
-                      {contact.card_type === 'prospect_card' ? (
-                        <>
-                          <GraduationCap className="h-3 w-3 mr-1" />
-                          Prospect
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="h-3 w-3 mr-1" />
-                          Business
-                        </>
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {new Date(contact.created_at).toLocaleDateString()}
+                      </Badge>
+                      <Badge variant={contact.card_type === 'prospect_card' ? 'default' : 'outline'} className="text-xs">
+                        {contact.card_type === 'prospect_card' ? (
+                          <>
+                            <GraduationCap className="h-3 w-3 mr-1" />
+                            Prospect
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            Business
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      {onEditContact && (
+                        <Button
+                          onClick={() => onEditContact(contact)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
                       )}
-                    </Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

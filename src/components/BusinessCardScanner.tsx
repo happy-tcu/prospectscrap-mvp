@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -15,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
-import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap } from 'lucide-react';
+import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap, Edit } from 'lucide-react';
 
 interface ContactData {
   full_name: string;
@@ -72,6 +73,11 @@ const BusinessCardScanner = () => {
   const [translationsMade, setTranslationsMade] = useState<boolean>(false);
   const [cardType, setCardType] = useState<'auto' | 'business_card' | 'prospect_card'>('auto');
   
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [duplicateContact, setDuplicateContact] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
@@ -84,7 +90,41 @@ const BusinessCardScanner = () => {
   }, [user, navigate]);
 
   if (showContacts) {
-    return <ContactsList onBack={() => setShowContacts(false)} />;
+    return <ContactsList 
+      onBack={() => setShowContacts(false)} 
+      onEditContact={(contact) => {
+        setIsEditing(true);
+        setEditingContactId(contact.id);
+        setContactData({
+          full_name: contact.full_name || '',
+          title: contact.title || '',
+          company: contact.company || '',
+          email: contact.email || '',
+          phone: contact.phone || '',
+          address_line: contact.address_line || '',
+          city: contact.city || '',
+          state_region: contact.state_region || '',
+          postal_code: contact.postal_code || '',
+          country: contact.country || '',
+          notes: contact.notes || '',
+          source_user: contact.source_user || '',
+          card_type: contact.card_type || 'business_card',
+          gender: contact.gender || '',
+          first_name: contact.first_name || '',
+          middle_name: contact.middle_name || '',
+          last_name: contact.last_name || '',
+          preferred_first_name: contact.preferred_first_name || '',
+          date_of_birth: contact.date_of_birth || '',
+          email_confirmation: contact.email_confirmation || '',
+          country_of_citizenship: contact.country_of_citizenship || '',
+          current_school: contact.current_school || '',
+          year_entering_university: contact.year_entering_university || '',
+          entry_status: contact.entry_status || ''
+        });
+        setStep('review');
+        setShowContacts(false);
+      }}
+    />;
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,30 +223,71 @@ const BusinessCardScanner = () => {
     setContactData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async () => {
+  const handleSaveClick = () => {
+    if (isEditing) {
+      handleUpdate();
+    } else {
+      handleSave();
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!user || !editingContactId) return;
+    
+    setIsSaving(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('contacts')
+        .update(contactData)
+        .eq('id', editingContactId)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast({
+        title: "Contact updated successfully",
+        description: `The ${contactData.card_type === 'prospect_card' ? 'prospect card' : 'business card'} information has been updated.`
+      });
+      setStep('saved');
+      setIsEditing(false);
+      setEditingContactId(null);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast({
+        title: "Update failed",
+        description: "Could not update the contact information. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSave = async (forceOverride: boolean = false) => {
     if (!user) return;
     
     setIsSaving(true);
     try {
-      // Check for duplicates by email or phone
-      const { data: existingContacts, error: searchError } = await supabase
-        .from('contacts')
-        .select('id, email, phone')
-        .eq('user_id', user.id)
-        .or(`email.eq.${contactData.email},phone.eq.${contactData.phone}`)
-        .limit(1);
+      // Check for duplicates by email only (if not editing and not forcing override)
+      if (!isEditing && !forceOverride && contactData.email) {
+        const { data: existingContacts, error: searchError } = await supabase
+          .from('contacts')
+          .select('id, email, full_name')
+          .eq('user_id', user.id)
+          .eq('email', contactData.email)
+          .limit(1);
 
-      if (searchError) {
-        throw searchError;
-      }
+        if (searchError) {
+          throw searchError;
+        }
 
-      if (existingContacts && existingContacts.length > 0) {
-        toast({
-          title: "Duplicate contact detected",
-          description: "A contact with this email or phone already exists.",
-          variant: "destructive"
-        });
-        return;
+        if (existingContacts && existingContacts.length > 0) {
+          setDuplicateContact(existingContacts[0]);
+          setShowDuplicateDialog(true);
+          return;
+        }
       }
 
       // Save new contact
@@ -261,6 +342,10 @@ const BusinessCardScanner = () => {
     setDetectedLanguage('');
     setTranslationsMade(false);
     setCardType('auto');
+    setIsEditing(false);
+    setEditingContactId(null);
+    setShowDuplicateDialog(false);
+    setDuplicateContact(null);
     setStep('upload');
   };
 
@@ -275,11 +360,11 @@ const BusinessCardScanner = () => {
                 <Scan className="h-5 w-5 text-primary-foreground" />
               </div>
             <h1 className="text-4xl font-bold text-foreground">
-              Prospect Scrap
+              {isEditing ? 'Edit Contact' : 'Prospect Scrap'}
             </h1>
             </div>
             <p className="text-muted-foreground">
-              Scan and manage your business cards and prospects
+              {isEditing ? 'Update contact information' : 'Scan and manage your business cards and prospects'}
             </p>
           </div>
           <div className="flex gap-3 justify-center sm:justify-end">
@@ -730,21 +815,21 @@ const BusinessCardScanner = () => {
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button
-                    onClick={handleSave}
+                    onClick={handleSaveClick}
                     disabled={isSaving}
                     className="flex-1"
                   >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Contact
-                      </>
-                    )}
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            {isEditing ? 'Updating...' : 'Saving...'}
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            {isEditing ? 'Update Contact' : 'Save Contact'}
+                          </>
+                        )}
                   </Button>
                   <Button 
                     onClick={handleReset} 
@@ -780,6 +865,34 @@ const BusinessCardScanner = () => {
           </Card>
         )}
       </div>
+
+      {/* Duplicate Contact Dialog */}
+      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate Contact Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              A contact with the email "{duplicateContact?.email}" already exists ({duplicateContact?.full_name}). 
+              Would you like to save this contact anyway?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDuplicateDialog(false);
+              setDuplicateContact(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowDuplicateDialog(false);
+              setDuplicateContact(null);
+              handleSave(true); // Force override
+            }}>
+              Save Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
