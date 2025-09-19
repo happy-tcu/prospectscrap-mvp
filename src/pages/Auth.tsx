@@ -56,26 +56,26 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4">
+      <div className="max-w-md w-full space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-xl mb-4">
-            <Scan className="h-8 w-8 text-white" />
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-primary rounded-xl mb-4">
+            <Scan className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
             Business Card Scanner
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Sign in to start scanning and managing your contacts
           </p>
         </div>
 
         <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-center">Welcome Back</CardTitle>
+          <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
+            <CardTitle className="text-center text-lg sm:text-xl">Welcome Back</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -83,9 +83,9 @@ const Auth = () => {
               </TabsList>
               
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email" className="text-sm">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -93,10 +93,11 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password" className="text-sm">Password</Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -104,9 +105,10 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isLoading}
+                      className="mt-1"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -120,9 +122,9 @@ const Auth = () => {
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -130,10 +132,11 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-sm">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -142,10 +145,11 @@ const Auth = () => {
                       required
                       disabled={isLoading}
                       minLength={6}
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-sm">Confirm Password</Label>
                     <Input
                       id="confirm-password"
                       type="password"
@@ -154,16 +158,17 @@ const Auth = () => {
                       required
                       disabled={isLoading}
                       minLength={6}
+                      className="mt-1"
                     />
                     {password !== confirmPassword && confirmPassword && (
-                      <p className="text-sm text-destructive mt-1">
+                      <p className="text-xs sm:text-sm text-destructive mt-1">
                         Passwords don't match
                       </p>
                     )}
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full" 
+                    className="w-full h-10 sm:h-11" 
                     disabled={isLoading || password !== confirmPassword}
                   >
                     {isLoading ? (
