@@ -1,11 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import ContactsList from '@/components/ContactsList';
+import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List } from 'lucide-react';
 
 interface ContactData {
   full_name: string;
@@ -43,9 +47,22 @@ const BusinessCardScanner = () => {
     source_user: ''
   });
   const [step, setStep] = useState<'upload' | 'review' | 'saved'>('upload');
+  const [showContacts, setShowContacts] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  if (showContacts) {
+    return <ContactsList onBack={() => setShowContacts(false)} />;
+  }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -71,49 +88,41 @@ const BusinessCardScanner = () => {
     }
   };
 
-  const mockOCRExtraction = (file: File): Promise<{ raw_text: string; parsed: ContactData }> => {
-    return new Promise((resolve) => {
-      // Mock OCR response for demo
-      setTimeout(() => {
-        const mockData = {
-          raw_text: "ACME CORPORATION\nJane Smith\nSenior Product Manager\njane.smith@acme.com\n+1 (555) 123-4567\n123 Business Ave, Suite 100\nSan Francisco, CA 94105",
-          parsed: {
-            full_name: "Jane Smith",
-            title: "Senior Product Manager", 
-            company: "ACME CORPORATION",
-            email: "jane.smith@acme.com",
-            phone: "+1 (555) 123-4567",
-            address_line: "123 Business Ave, Suite 100",
-            city: "San Francisco",
-            state_region: "CA",
-            postal_code: "94105",
-            country: "USA",
-            notes: "",
-            source_user: ""
-          }
-        };
-        resolve(mockData);
-      }, 2000);
+  const extractWithOCR = async (file: File): Promise<{ raw_text: string; parsed: ContactData }> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('source_user', user?.email || '');
+
+    const { data, error } = await supabase.functions.invoke('ocr-extract', {
+      body: formData
     });
+
+    if (error) {
+      console.error('OCR Error:', error);
+      throw new Error(error.message || 'OCR extraction failed');
+    }
+
+    return data;
   };
 
   const handleExtractFields = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !user) return;
     
     setIsProcessing(true);
     try {
-      const result = await mockOCRExtraction(selectedFile);
+      const result = await extractWithOCR(selectedFile);
       setRawText(result.raw_text);
-      setContactData(result.parsed);
+      setContactData({ ...result.parsed, source_user: user.email || '' });
       setStep('review');
       toast({
         title: "Fields extracted successfully",
         description: "Review and edit the extracted information below."
       });
     } catch (error) {
+      console.error('OCR extraction error:', error);
       toast({
         title: "Extraction failed",
-        description: "Could not extract fields from the business card.",
+        description: "Could not extract fields from the business card. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -126,31 +135,54 @@ const BusinessCardScanner = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    
     setIsSaving(true);
     try {
-      // Mock save operation
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simulate random duplicate check
-      const isDuplicate = Math.random() < 0.3;
-      
-      if (isDuplicate) {
+      // Check for duplicates by email or phone
+      const { data: existingContacts, error: searchError } = await supabase
+        .from('contacts')
+        .select('id, email, phone')
+        .eq('user_id', user.id)
+        .or(`email.eq.${contactData.email},phone.eq.${contactData.phone}`)
+        .limit(1);
+
+      if (searchError) {
+        throw searchError;
+      }
+
+      if (existingContacts && existingContacts.length > 0) {
         toast({
           title: "Duplicate contact detected",
-          description: "This contact already exists in the database.",
+          description: "A contact with this email or phone already exists.",
           variant: "destructive"
         });
-      } else {
-        toast({
-          title: "Contact saved successfully",
-          description: "The business card information has been added to your database."
-        });
-        setStep('saved');
+        return;
       }
+
+      // Save new contact
+      const { error: insertError } = await supabase
+        .from('contacts')
+        .insert({
+          user_id: user.id,
+          ...contactData,
+          raw_ocr_text: rawText
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast({
+        title: "Contact saved successfully",
+        description: "The business card information has been added to your database."
+      });
+      setStep('saved');
     } catch (error) {
+      console.error('Save error:', error);
       toast({
         title: "Save failed",
-        description: "Could not save the contact information.",
+        description: "Could not save the contact information. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -183,13 +215,33 @@ const BusinessCardScanner = () => {
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center py-8">
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-            Business Card Scanner
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Capture, extract, and save contact information instantly
-          </p>
+        <div className="flex justify-between items-center py-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              Business Card Scanner
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Capture, extract, and save contact information instantly
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowContacts(true)} 
+              variant="outline" 
+              size="sm"
+            >
+              <List className="h-4 w-4 mr-2" />
+              My Contacts
+            </Button>
+            <Button 
+              onClick={signOut} 
+              variant="outline" 
+              size="sm"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* File Input */}
