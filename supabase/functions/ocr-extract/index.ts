@@ -30,7 +30,19 @@ serve(async (req) => {
   }
 
   try {
-    const formData = await req.formData();
+    console.log('OCR request received, method:', req.method);
+    
+    let formData;
+    try {
+      formData = await req.formData();
+    } catch (formError) {
+      console.error('Form data parsing error:', formError);
+      return new Response(JSON.stringify({ error: 'Invalid form data' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const imageFile = formData.get('image') as File;
     const sourceUser = formData.get('source_user') as string || '';
 
