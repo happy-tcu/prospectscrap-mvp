@@ -79,36 +79,44 @@ const Auth = () => {
                 About this app
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-2xl">
-                  <Scan className="h-6 w-6" />
+            <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader className="pb-6">
+                <DialogTitle className="flex items-center gap-3 text-3xl font-bold">
+                  <Scan className="h-7 w-7" />
                   Prospect Scrap
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-6 py-4">
+              <div className="space-y-8">
                 {/* Problem & Inspiration */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">The Problem & Our Inspiration</h3>
-                  <div className="bg-muted/30 p-4 rounded-lg space-y-4">
-                    <p className="text-muted-foreground">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">The Problem & Our Inspiration</h3>
+                  <div className="bg-muted/20 p-6 rounded-xl space-y-6">
+                    <p className="text-muted-foreground leading-relaxed">
                       <strong className="text-foreground">Admission counselors are relationship builders.</strong> They travel extensively, 
                       attending conferences and visiting schools to recruit the next generation of students. In the process, 
                       they return with hundreds of business cards from networking events and thousands of prospect cards from school visits.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                      <div className="p-4 bg-destructive/10 rounded-lg">
-                        <div className="text-2xl font-bold text-destructive mb-2">16 Hours</div>
-                        <div className="text-sm text-muted-foreground">Manual data entry for 1,000 prospect cards<br/>(50 seconds per card + breaks)</div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-6 bg-background border-2 border-destructive/20 rounded-xl text-center">
+                        <div className="text-3xl font-bold text-destructive mb-3">16 Hours</div>
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                          Manual data entry for 1,000 prospect cards<br/>
+                          <span className="text-xs">(50 seconds per card + breaks)</span>
+                        </div>
                       </div>
-                      <div className="p-4 bg-success/10 rounded-lg">
-                        <div className="text-2xl font-bold text-success mb-2">1 Hour</div>
-                        <div className="text-sm text-muted-foreground">With Prospect Scrap automated processing<br/>(5 seconds per card)</div>
+                      <div className="p-6 bg-background border-2 border-success/20 rounded-xl text-center">
+                        <div className="text-3xl font-bold text-success mb-3">1 Hour</div>
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                          With Prospect Scrap automated processing<br/>
+                          <span className="text-xs">(5 seconds per card)</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-primary/10 rounded-lg">
-                      <div className="font-semibold text-primary">Result: 15 hours saved per 1,000 cards</div>
-                      <div className="text-sm text-muted-foreground mt-1">
+                    
+                    <div className="text-center p-6 bg-primary/5 border border-primary/20 rounded-xl">
+                      <div className="text-lg font-semibold text-primary mb-2">Result: 15 hours saved per 1,000 cards</div>
+                      <div className="text-sm text-muted-foreground leading-relaxed">
                         More time for relationship building, professional development, and strategic initiatives
                       </div>
                     </div>
@@ -116,123 +124,123 @@ const Auth = () => {
                 </div>
 
                 {/* What it does */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">What does Prospect Scrap do?</h3>
-                  <p className="text-muted-foreground mb-4">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">What does Prospect Scrap do?</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-6">
                     Prospect Scrap is an intelligent OCR (Optical Character Recognition) platform that automatically 
                     extracts and organizes contact information from business cards and prospect forms. Simply take a 
                     photo or upload an image, and our AI will instantly parse all the relevant details into a structured format.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Camera className="h-5 w-5 mt-0.5 text-primary" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="flex items-start gap-4 p-5 bg-muted/20 rounded-xl">
+                      <Camera className="h-6 w-6 mt-1 text-primary flex-shrink-0" />
                       <div>
-                        <h4 className="font-medium">Smart Scanning</h4>
-                        <p className="text-sm text-muted-foreground">Auto-detects business cards vs prospect forms</p>
+                        <h4 className="font-semibold mb-2">Smart Scanning</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">Auto-detects business cards vs prospect forms</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Database className="h-5 w-5 mt-0.5 text-primary" />
+                    <div className="flex items-start gap-4 p-5 bg-muted/20 rounded-xl">
+                      <Database className="h-6 w-6 mt-1 text-primary flex-shrink-0" />
                       <div>
-                        <h4 className="font-medium">Organized Storage</h4>
-                        <p className="text-sm text-muted-foreground">All contacts saved and easily searchable</p>
+                        <h4 className="font-semibold mb-2">Organized Storage</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">All contacts saved and easily searchable</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Value Proposition */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Value Proposition</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-success" />
-                      <span><strong>Save Time:</strong> No more manual data entry - get contact info in seconds</span>
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Value Proposition</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
+                      <Zap className="h-6 w-6 text-success flex-shrink-0" />
+                      <span className="leading-relaxed"><strong>Save Time:</strong> No more manual data entry - get contact info in seconds</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Database className="h-5 w-5 text-success" />
-                      <span><strong>Never Lose Contacts:</strong> Digital backup of all your business cards</span>
+                    <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
+                      <Database className="h-6 w-6 text-success flex-shrink-0" />
+                      <span className="leading-relaxed"><strong>Never Lose Contacts:</strong> Digital backup of all your business cards</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <ArrowRight className="h-5 w-5 text-success" />
-                      <span><strong>Export Ready:</strong> Download your contacts as Excel files</span>
+                    <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
+                      <ArrowRight className="h-6 w-6 text-success flex-shrink-0" />
+                      <span className="leading-relaxed"><strong>Export Ready:</strong> Download your contacts as Excel files</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Scan className="h-5 w-5 text-success" />
-                      <span><strong>Multi-format Support:</strong> Works with business cards and prospect forms</span>
+                    <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
+                      <Scan className="h-6 w-6 text-success flex-shrink-0" />
+                      <span className="leading-relaxed"><strong>Multi-format Support:</strong> Works with business cards and prospect forms</span>
                     </div>
                   </div>
                 </div>
 
                 {/* How it Works */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">How it Works</h3>
-                  <div className="bg-muted/30 p-4 rounded-lg">
-                    <div className="space-y-4">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">How it Works</h3>
+                  <div className="bg-muted/20 p-6 rounded-xl">
+                    <div className="space-y-6">
                       {/* Step 1 */}
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0">1</div>
                         <div className="flex-1">
-                          <div className="font-medium">Upload or Capture</div>
-                          <div className="text-sm text-muted-foreground">Take a photo or upload an image of your business card</div>
+                          <div className="font-semibold text-lg mb-1">Upload or Capture</div>
+                          <div className="text-muted-foreground leading-relaxed">Take a photo or upload an image of your business card</div>
                         </div>
-                        <Camera className="h-5 w-5 text-muted-foreground" />
+                        <Camera className="h-6 w-6 text-muted-foreground flex-shrink-0" />
                       </div>
                       
-                      <div className="ml-4 border-l-2 border-muted h-4"></div>
+                      <div className="ml-5 border-l-2 border-muted h-6"></div>
                       
                       {/* Step 2 */}
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">2</div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0">2</div>
                         <div className="flex-1">
-                          <div className="font-medium">AI Processing</div>
-                          <div className="text-sm text-muted-foreground">OpenAI Vision API extracts text and structures the data</div>
+                          <div className="font-semibold text-lg mb-1">AI Processing</div>
+                          <div className="text-muted-foreground leading-relaxed">OpenAI Vision API extracts text and structures the data</div>
                         </div>
-                        <Zap className="h-5 w-5 text-muted-foreground" />
+                        <Zap className="h-6 w-6 text-muted-foreground flex-shrink-0" />
                       </div>
                       
-                      <div className="ml-4 border-l-2 border-muted h-4"></div>
+                      <div className="ml-5 border-l-2 border-muted h-6"></div>
                       
                       {/* Step 3 */}
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">3</div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0">3</div>
                         <div className="flex-1">
-                          <div className="font-medium">Review & Save</div>
-                          <div className="text-sm text-muted-foreground">Verify the extracted information and save to your database</div>
+                          <div className="font-semibold text-lg mb-1">Review & Save</div>
+                          <div className="text-muted-foreground leading-relaxed">Verify the extracted information and save to your database</div>
                         </div>
-                        <Database className="h-5 w-5 text-muted-foreground" />
+                        <Database className="h-6 w-6 text-muted-foreground flex-shrink-0" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Technical Architecture */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Technical Architecture</h3>
-                  <div className="bg-muted/30 p-4 rounded-lg text-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                      <div className="space-y-2">
-                        <div className="w-12 h-12 bg-primary text-primary-foreground rounded-lg mx-auto flex items-center justify-center">
-                          <span className="font-bold">UI</span>
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Technical Architecture</h3>
+                  <div className="bg-muted/20 p-6 rounded-xl">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-primary text-primary-foreground rounded-xl mx-auto flex items-center justify-center">
+                          <span className="font-bold text-xl">UI</span>
                         </div>
-                        <div className="font-medium">React Frontend</div>
-                        <div className="text-muted-foreground">Modern, responsive interface built with React and Tailwind CSS</div>
+                        <div className="font-semibold text-lg">React Frontend</div>
+                        <div className="text-muted-foreground leading-relaxed">Modern, responsive interface built with React and Tailwind CSS</div>
                       </div>
                       
-                      <div className="space-y-2">
-                        <div className="w-12 h-12 bg-primary text-primary-foreground rounded-lg mx-auto flex items-center justify-center">
-                          <Database className="h-6 w-6" />
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-primary text-primary-foreground rounded-xl mx-auto flex items-center justify-center">
+                          <Database className="h-8 w-8" />
                         </div>
-                        <div className="font-medium">Supabase Backend</div>
-                        <div className="text-muted-foreground">Authentication, database, and edge functions for OCR processing</div>
+                        <div className="font-semibold text-lg">Supabase Backend</div>
+                        <div className="text-muted-foreground leading-relaxed">Authentication, database, and edge functions for OCR processing</div>
                       </div>
                       
-                      <div className="space-y-2">
-                        <div className="w-12 h-12 bg-primary text-primary-foreground rounded-lg mx-auto flex items-center justify-center">
-                          <Zap className="h-6 w-6" />
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-primary text-primary-foreground rounded-xl mx-auto flex items-center justify-center">
+                          <Zap className="h-8 w-8" />
                         </div>
-                        <div className="font-medium">OpenAI Vision</div>
-                        <div className="text-muted-foreground">Advanced AI for text recognition and data extraction</div>
+                        <div className="font-semibold text-lg">OpenAI Vision</div>
+                        <div className="text-muted-foreground leading-relaxed">Advanced AI for text recognition and data extraction</div>
                       </div>
                     </div>
                   </div>
