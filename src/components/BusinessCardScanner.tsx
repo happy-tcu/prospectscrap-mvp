@@ -93,6 +93,7 @@ const BusinessCardScanner = () => {
   const [batchId] = useState(() => crypto.randomUUID());
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -153,15 +154,13 @@ const BusinessCardScanner = () => {
 
   const handleCameraCapture = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('capture', 'environment');
       fileInputRef.current.click();
     }
   };
 
   const handleFileUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.removeAttribute('capture');
-      fileInputRef.current.click();
+    if (pdfInputRef.current) {
+      pdfInputRef.current.click();
     }
   };
 
@@ -430,11 +429,21 @@ const BusinessCardScanner = () => {
           </div>
         </div>
 
-        {/* File Input */}
+        {/* Camera Input for Photos */}
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {/* File Input for PDFs */}
+        <input
+          ref={(el) => { pdfInputRef.current = el; }}
+          type="file"
+          accept="application/pdf"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -536,7 +545,7 @@ const BusinessCardScanner = () => {
                       className="w-full"
                     >
                       <Upload className="h-5 w-5 mr-2" />
-                      Upload Image
+                      Upload PDF
                     </Button>
                   </div>
                 </div>
