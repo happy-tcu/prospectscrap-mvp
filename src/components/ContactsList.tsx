@@ -25,6 +25,11 @@ interface Contact {
   source_user: string;
   created_at: string;
   card_type: string;
+  // Organization fields
+  event_name?: string;
+  school_name?: string;
+  event_date?: string;
+  batch_id?: string;
   // Prospect card fields
   gender?: string;
   first_name?: string;
