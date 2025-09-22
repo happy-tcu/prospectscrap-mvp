@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
 import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap, Edit } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface ContactData {
   full_name: string;
@@ -98,6 +99,9 @@ const BusinessCardScanner = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Configure PDF.js worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');
@@ -142,13 +146,99 @@ const BusinessCardScanner = () => {
     />;
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const convertPdfToImages = async (file: File): Promise<File[]> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    const images: File[] = [];
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 2.0 });
+      
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d')!;
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+        canvas: canvas
+      }).promise;
+
+      // Convert canvas to blob and then to File
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.8);
+      });
+
+      const imageFile = new File([blob], `page-${pageNum}.jpg`, { type: 'image/jpeg' });
+      images.push(imageFile);
+    }
+
+    return images;
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      setStep('upload');
+      if (file.type === 'application/pdf') {
+        setIsProcessing(true);
+        try {
+          toast({
+            title: "Processing PDF",
+            description: "Converting PDF pages to images...",
+          });
+
+          const images = await convertPdfToImages(file);
+          setBatchData([]);
+          setIsPdfBatch(true);
+          setBatchProgress({ current: 0, total: images.length });
+
+          toast({
+            title: "PDF Converted",
+            description: `Processing ${images.length} pages...`,
+          });
+
+          // Process each page sequentially
+          const processedContacts: ContactData[] = [];
+          for (let i = 0; i < images.length; i++) {
+            setBatchProgress({ current: i + 1, total: images.length });
+            
+            try {
+              const result = await extractWithOCR(images[i]);
+              if (result.parsed) {
+                processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
+              }
+            } catch (error) {
+              console.error(`Error processing page ${i + 1}:`, error);
+            }
+          }
+
+          setBatchData(processedContacts);
+          setStep('review');
+          
+          toast({
+            title: "PDF Processing Complete",
+            description: `Successfully processed ${processedContacts.length} of ${images.length} pages.`,
+          });
+        } catch (error) {
+          console.error('Error processing PDF:', error);
+          toast({
+            title: "Error",
+            description: "Failed to process PDF. Please try again or upload individual images.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      } else {
+        // Handle regular image files
+        setSelectedFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        setStep('upload');
+        setIsPdfBatch(false);
+      }
     }
   };
 
@@ -443,7 +533,7 @@ const BusinessCardScanner = () => {
         <input
           ref={(el) => { pdfInputRef.current = el; }}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,image/*"
           onChange={handleFileSelect}
           className="hidden"
         />
