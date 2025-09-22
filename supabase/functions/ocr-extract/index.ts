@@ -41,19 +41,20 @@ interface ContactData {
   entry_status?: string;
 }
 
-// PDF processing function (simplified - in production use proper PDF library)
+// PDF processing function - OpenAI Vision API requires images, not PDFs
 async function processPdfPages(pdfBuffer: ArrayBuffer): Promise<string[]> {
   try {
-    // For now, return the PDF as base64 - in production, convert pages to images
-    const pdfData = new Uint8Array(pdfBuffer);
-    const base64Pdf = btoa(String.fromCharCode(...pdfData));
+    console.log('PDF processing requested but not yet implemented');
+    // OpenAI Vision API cannot process PDF files directly - it only accepts images
+    // In a production environment, you would need to:
+    // 1. Use a PDF processing library like pdf-poppler or pdf2pic
+    // 2. Convert each PDF page to an image (PNG/JPEG)
+    // 3. Then send each image to OpenAI Vision API
     
-    // This is a placeholder - real implementation would use pdf-lib or similar
-    // to convert each page to an image
-    return [`data:application/pdf;base64,${base64Pdf}`];
+    throw new Error('PDF processing is not yet implemented. Please upload individual images instead of PDF files, or implement PDF-to-image conversion.');
   } catch (error) {
     console.error('Error processing PDF pages:', error);
-    throw new Error('Failed to process PDF pages');
+    throw new Error('PDF processing is not supported. Please upload images instead.');
   }
 }
 
