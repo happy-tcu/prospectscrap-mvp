@@ -17,6 +17,7 @@ export type Database = {
       contacts: {
         Row: {
           address_line: string | null
+          batch_id: string | null
           card_type: string
           city: string | null
           company: string | null
@@ -28,6 +29,8 @@ export type Database = {
           email: string | null
           email_confirmation: string | null
           entry_status: string | null
+          event_date: string | null
+          event_name: string | null
           first_name: string | null
           full_name: string
           gender: string | null
@@ -39,6 +42,7 @@ export type Database = {
           postal_code: string | null
           preferred_first_name: string | null
           raw_ocr_text: string | null
+          school_name: string | null
           source_user: string | null
           state_region: string | null
           title: string | null
@@ -48,6 +52,7 @@ export type Database = {
         }
         Insert: {
           address_line?: string | null
+          batch_id?: string | null
           card_type?: string
           city?: string | null
           company?: string | null
@@ -59,6 +64,8 @@ export type Database = {
           email?: string | null
           email_confirmation?: string | null
           entry_status?: string | null
+          event_date?: string | null
+          event_name?: string | null
           first_name?: string | null
           full_name: string
           gender?: string | null
@@ -70,6 +77,7 @@ export type Database = {
           postal_code?: string | null
           preferred_first_name?: string | null
           raw_ocr_text?: string | null
+          school_name?: string | null
           source_user?: string | null
           state_region?: string | null
           title?: string | null
@@ -79,6 +87,7 @@ export type Database = {
         }
         Update: {
           address_line?: string | null
+          batch_id?: string | null
           card_type?: string
           city?: string | null
           company?: string | null
@@ -90,6 +99,8 @@ export type Database = {
           email?: string | null
           email_confirmation?: string | null
           entry_status?: string | null
+          event_date?: string | null
+          event_name?: string | null
           first_name?: string | null
           full_name?: string
           gender?: string | null
@@ -101,12 +112,198 @@ export type Database = {
           postal_code?: string | null
           preferred_first_name?: string | null
           raw_ocr_text?: string | null
+          school_name?: string | null
           source_user?: string | null
           state_region?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
           year_entering_university?: string | null
+        }
+        Relationships: []
+      }
+      focus_sessions: {
+        Row: {
+          actual_duration: number | null
+          ai_feedback: Json | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          planned_duration: number
+          quality_rating: number | null
+          started_at: string
+          task_id: string | null
+          task_title: string
+          user_id: string
+        }
+        Insert: {
+          actual_duration?: number | null
+          ai_feedback?: Json | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_duration: number
+          quality_rating?: number | null
+          started_at?: string
+          task_id?: string | null
+          task_title: string
+          user_id: string
+        }
+        Update: {
+          actual_duration?: number | null
+          ai_feedback?: Json | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_duration?: number
+          quality_rating?: number | null
+          started_at?: string
+          task_id?: string | null
+          task_title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          preferences: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          preferences?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          preferences?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          ai_breakdown: Json | null
+          ai_generated: boolean | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          duration: number
+          id: string
+          priority: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_breakdown?: Json | null
+          ai_generated?: boolean | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          priority?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_breakdown?: Json | null
+          ai_generated?: boolean | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          priority?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          achievements: Json | null
+          created_at: string
+          current_streak: number | null
+          daily_streak_count: number | null
+          id: string
+          last_session_date: string | null
+          level: number | null
+          longest_streak: number | null
+          total_focus_time: number | null
+          total_points: number | null
+          total_sessions: number | null
+          updated_at: string
+          user_id: string
+          weekly_goal: number | null
+        }
+        Insert: {
+          achievements?: Json | null
+          created_at?: string
+          current_streak?: number | null
+          daily_streak_count?: number | null
+          id?: string
+          last_session_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_focus_time?: number | null
+          total_points?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id: string
+          weekly_goal?: number | null
+        }
+        Update: {
+          achievements?: Json | null
+          created_at?: string
+          current_streak?: number | null
+          daily_streak_count?: number | null
+          id?: string
+          last_session_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_focus_time?: number | null
+          total_points?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id?: string
+          weekly_goal?: number | null
         }
         Relationships: []
       }

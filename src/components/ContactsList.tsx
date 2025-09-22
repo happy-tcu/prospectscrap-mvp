@@ -89,54 +89,73 @@ const ContactsList: React.FC<ContactsListProps> = ({ onBack, onEditContact }) =>
     const contactsToExport = type === 'all' ? contacts : 
       contacts.filter(contact => (contact.card_type || 'business_card') === type);
 
-    if (type === 'prospect_card') {
-      const exportData = contactsToExport.map(contact => ({
-        'Gender': contact.gender || '',
-        'First Name': contact.first_name || '',
-        'Middle Name': contact.middle_name || '',
-        'Last Name': contact.last_name || '',
-        'Preferred First Name': contact.preferred_first_name || '',
-        'Date of Birth': contact.date_of_birth || '',
-        'Email': contact.email || '',
-        'Email Confirmation': contact.email_confirmation || '',
-        'Country of Citizenship': contact.country_of_citizenship || '',
-        'Current School': contact.current_school || '',
-        'Year Entering University': contact.year_entering_university || '',
-        'Entry Status': contact.entry_status || '',
-        'Notes': contact.notes || '',
-        'Date Added': new Date(contact.created_at).toLocaleDateString()
-      }));
+    // Group contacts by school for organized tabs
+    const contactsBySchool = contactsToExport.reduce((acc, contact) => {
+      const schoolKey = contact.school_name || contact.current_school || 'Other';
+      if (!acc[schoolKey]) {
+        acc[schoolKey] = [];
+      }
+      acc[schoolKey].push(contact);
+      return acc;
+    }, {} as Record<string, Contact[]>);
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Prospect Cards');
-      
-      const fileName = `prospect-cards-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-    } else {
-      const exportData = contactsToExport.map(contact => ({
-        'Full Name': contact.full_name || '',
-        'Title': contact.title || '',
-        'Company': contact.company || '',
-        'Email': contact.email || '',
-        'Phone': contact.phone || '',
-        'Address': contact.address_line || '',
-        'City': contact.city || '',
-        'State/Region': contact.state_region || '',
-        'Postal Code': contact.postal_code || '',
-        'Country': contact.country || '',
-        'Notes': contact.notes || '',
-        'Date Added': new Date(contact.created_at).toLocaleDateString()
-      }));
+    const workbook = XLSX.utils.book_new();
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Business Cards');
-      
-      const filePrefix = type === 'business_card' ? 'business-cards' : 'all-contacts';
-      const fileName = `${filePrefix}-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-    }
+    // Create separate sheets for each school
+    Object.entries(contactsBySchool).forEach(([schoolName, schoolContacts]) => {
+      if (type === 'prospect_card') {
+        const exportData = schoolContacts.map(contact => ({
+          'Gender': contact.gender || '',
+          'First Name': contact.first_name || '',
+          'Middle Name': contact.middle_name || '',
+          'Last Name': contact.last_name || '',
+          'Preferred First Name': contact.preferred_first_name || '',
+          'Date of Birth': contact.date_of_birth || '',
+          'Email': contact.email || '',
+          'Email Confirmation': contact.email_confirmation || '',
+          'Country of Citizenship': contact.country_of_citizenship || '',
+          'Current School': contact.current_school || '',
+          'Year Entering University': contact.year_entering_university || '',
+          'Entry Status': contact.entry_status || '',
+          'Event Name': contact.event_name || '',
+          'School Name': contact.school_name || '',
+          'Event Date': contact.event_date || '',
+          'Notes': contact.notes || '',
+          'Date Added': new Date(contact.created_at).toLocaleDateString()
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const sheetName = schoolName.substring(0, 31); // Excel sheet name limit
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      } else {
+        const exportData = schoolContacts.map(contact => ({
+          'Full Name': contact.full_name || '',
+          'Title': contact.title || '',
+          'Company': contact.company || '',
+          'Email': contact.email || '',
+          'Phone': contact.phone || '',
+          'Address': contact.address_line || '',
+          'City': contact.city || '',
+          'State/Region': contact.state_region || '',
+          'Postal Code': contact.postal_code || '',
+          'Country': contact.country || '',
+          'Event Name': contact.event_name || '',
+          'School Name': contact.school_name || '',
+          'Event Date': contact.event_date || '',
+          'Notes': contact.notes || '',
+          'Date Added': new Date(contact.created_at).toLocaleDateString()
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const sheetName = schoolName.substring(0, 31); // Excel sheet name limit
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      }
+    });
+
+    const filePrefix = type === 'business_card' ? 'business-cards' : 
+                      type === 'prospect_card' ? 'prospect-cards' : 'all-contacts';
+    const fileName = `${filePrefix}-by-school-${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   if (loading) {

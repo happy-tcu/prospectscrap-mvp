@@ -32,6 +32,11 @@ interface ContactData {
   notes: string;
   source_user: string;
   card_type: string;
+  // Organization fields
+  event_name?: string;
+  school_name?: string;
+  event_date?: string;
+  batch_id?: string;
   // Prospect card specific fields
   gender?: string;
   first_name?: string;
@@ -77,6 +82,15 @@ const BusinessCardScanner = () => {
   const [duplicateContact, setDuplicateContact] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  
+  // New batch processing and organization state
+  const [batchData, setBatchData] = useState<ContactData[]>([]);
+  const [isPdfBatch, setIsPdfBatch] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const [eventName, setEventName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [batchId] = useState(() => crypto.randomUUID());
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -151,18 +165,25 @@ const BusinessCardScanner = () => {
     }
   };
 
-  const extractWithOCR = async (file: File): Promise<{ 
-    raw_text: string; 
-    parsed: ContactData; 
-    detected_language?: string; 
+  const extractWithOCR = async (file: File): Promise<{
+    raw_text?: string;
+    parsed?: ContactData;
+    detected_language?: string;
     translations_made?: boolean;
     card_type?: string;
+    batch?: boolean;
+    total_pages?: number;
+    results?: any[];
   }> => {
     console.log('Starting OCR extraction for file:', file.name, 'size:', file.size);
     const formData = new FormData();
     formData.append('image', file);
     formData.append('source_user', user?.email || '');
     formData.append('card_type', cardType);
+    formData.append('event_name', eventName);
+    formData.append('school_name', schoolName);
+    formData.append('event_date', eventDate);
+    formData.append('batch_id', batchId);
 
     console.log('Calling ocr-extract function...');
     const { data, error } = await supabase.functions.invoke('ocr-extract', {
@@ -188,30 +209,48 @@ const BusinessCardScanner = () => {
     if (!selectedFile || !user) return;
     
     setIsProcessing(true);
+    const isPdf = selectedFile.type === 'application/pdf';
+    setIsPdfBatch(isPdf);
+    
     try {
       const result = await extractWithOCR(selectedFile);
-      setRawText(result.raw_text);
-      setContactData({ ...result.parsed, source_user: user.email || '' });
-      setDetectedLanguage(result.detected_language || 'English');
-      setTranslationsMade(result.translations_made || false);
-      setStep('review');
       
-      const cardTypeText = result.parsed.card_type === 'prospect_card' ? 'prospect card' : 'business card';
-      const toastMessage = result.translations_made 
-        ? `${cardTypeText} extracted and translated from ${result.detected_language} to English`
-        : `${cardTypeText} extracted successfully`;
-      
-      toast({
-        title: "Extraction completed",
-        description: toastMessage
-      });
+      if (result.batch && result.results) {
+        // Handle PDF batch processing
+        const successfulResults = result.results.filter(r => r.success);
+        setBatchData(successfulResults.map(r => ({ ...r.parsed, source_user: user.email || '' })));
+        setBatchProgress({ current: successfulResults.length, total: result.total_pages || 0 });
+        setStep('review');
+        
+        toast({
+          title: "PDF processed",
+          description: `Extracted ${successfulResults.length} cards from ${result.total_pages} pages`
+        });
+      } else if (result.parsed) {
+        // Handle single image processing
+        setRawText(result.raw_text || '');
+        setContactData({ ...result.parsed, source_user: user.email || '' });
+        setDetectedLanguage(result.detected_language || 'English');
+        setTranslationsMade(result.translations_made || false);
+        setStep('review');
+        
+        const cardTypeText = result.parsed.card_type === 'prospect_card' ? 'prospect card' : 'business card';
+        const toastMessage = result.translations_made 
+          ? `${cardTypeText} extracted and translated from ${result.detected_language} to English`
+          : `${cardTypeText} extracted successfully`;
+        
+        toast({
+          title: "Extraction completed",
+          description: toastMessage
+        });
+      }
     } catch (error) {
       console.error('OCR extraction error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error details:', errorMessage);
       toast({
         title: "Extraction failed",
-        description: `Could not extract fields from the card: ${errorMessage}`,
+        description: `Could not extract fields from the ${isPdf ? 'PDF' : 'card'}: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
@@ -395,7 +434,7 @@ const BusinessCardScanner = () => {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -435,6 +474,46 @@ const BusinessCardScanner = () => {
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              {/* Organization Information */}
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Event/School Information (Optional)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="event-name" className="text-sm">Event Name</Label>
+                    <Input
+                      id="event-name"
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      placeholder="Career Fair 2024"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="school-name" className="text-sm">School Name</Label>
+                    <Input
+                      id="school-name"
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
+                      placeholder="University of Technology"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="event-date" className="text-sm">Event Date</Label>
+                    <Input
+                      id="event-date"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
               </div>
 
               {!selectedFile ? (
