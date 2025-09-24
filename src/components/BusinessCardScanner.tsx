@@ -653,7 +653,7 @@ const BusinessCardScanner = () => {
                       className="w-full"
                     >
                       <Upload className="h-5 w-5 mr-2" />
-                      Upload PDF
+                      Upload File
                     </Button>
                   </div>
                 </div>
