@@ -183,66 +183,124 @@ const BusinessCardScanner = () => {
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type === 'application/pdf') {
-        setIsProcessing(true);
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    // Handle multiple files
+    if (files.length > 1) {
+      setIsProcessing(true);
+      setBatchData([]);
+      setIsPdfBatch(false);
+      setBatchProgress({ current: 0, total: files.length });
+
+      toast({
+        title: "Processing Multiple Files",
+        description: `Processing ${files.length} files...`,
+      });
+
+      const processedContacts: ContactData[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setBatchProgress({ current: i + 1, total: files.length });
+        
         try {
-          toast({
-            title: "Processing PDF",
-            description: "Converting PDF pages to images...",
-          });
-
-          const images = await convertPdfToImages(file);
-          setBatchData([]);
-          setIsPdfBatch(true);
-          setBatchProgress({ current: 0, total: images.length });
-
-          toast({
-            title: "PDF Converted",
-            description: `Processing ${images.length} pages...`,
-          });
-
-          // Process each page sequentially
-          const processedContacts: ContactData[] = [];
-          for (let i = 0; i < images.length; i++) {
-            setBatchProgress({ current: i + 1, total: images.length });
-            
-            try {
-              const result = await extractWithOCR(images[i]);
-              if (result.parsed) {
-                processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
+          if (file.type === 'application/pdf') {
+            // Convert PDF to images and process each page
+            const images = await convertPdfToImages(file);
+            for (const imageFile of images) {
+              try {
+                const result = await extractWithOCR(imageFile);
+                if (result.parsed) {
+                  processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
+                }
+              } catch (error) {
+                console.error(`Error processing PDF page:`, error);
               }
-            } catch (error) {
-              console.error(`Error processing page ${i + 1}:`, error);
+            }
+          } else {
+            // Process image file
+            const result = await extractWithOCR(file);
+            if (result.parsed) {
+              processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
             }
           }
-
-          setBatchData(processedContacts);
-          setStep('review');
-          
-          toast({
-            title: "PDF Processing Complete",
-            description: `Successfully processed ${processedContacts.length} of ${images.length} pages.`,
-          });
         } catch (error) {
-          console.error('Error processing PDF:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process PDF. Please try again or upload individual images.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsProcessing(false);
+          console.error(`Error processing file ${file.name}:`, error);
         }
-      } else {
-        // Handle regular image files
-        setSelectedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setStep('upload');
-        setIsPdfBatch(false);
       }
+
+      setBatchData(processedContacts);
+      setStep('review');
+      
+      toast({
+        title: "Batch Processing Complete",
+        description: `Successfully processed ${processedContacts.length} contacts from ${files.length} files.`,
+      });
+      
+      setIsProcessing(false);
+      return;
+    }
+
+    // Handle single file (existing logic)
+    const file = files[0];
+    if (file.type === 'application/pdf') {
+      setIsProcessing(true);
+      try {
+        toast({
+          title: "Processing PDF",
+          description: "Converting PDF pages to images...",
+        });
+
+        const images = await convertPdfToImages(file);
+        setBatchData([]);
+        setIsPdfBatch(true);
+        setBatchProgress({ current: 0, total: images.length });
+
+        toast({
+          title: "PDF Converted",
+          description: `Processing ${images.length} pages...`,
+        });
+
+        // Process each page sequentially
+        const processedContacts: ContactData[] = [];
+        for (let i = 0; i < images.length; i++) {
+          setBatchProgress({ current: i + 1, total: images.length });
+          
+          try {
+            const result = await extractWithOCR(images[i]);
+            if (result.parsed) {
+              processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
+            }
+          } catch (error) {
+            console.error(`Error processing page ${i + 1}:`, error);
+          }
+        }
+
+        setBatchData(processedContacts);
+        setStep('review');
+        
+        toast({
+          title: "PDF Processing Complete",
+          description: `Successfully processed ${processedContacts.length} of ${images.length} pages.`,
+        });
+      } catch (error) {
+        console.error('Error processing PDF:', error);
+        toast({
+          title: "Error",
+          description: "Failed to process PDF. Please try again or upload individual images.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      // Handle regular image files
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setStep('upload');
+      setIsPdfBatch(false);
     }
   };
 
@@ -547,11 +605,12 @@ const BusinessCardScanner = () => {
           className="hidden"
         />
 
-        {/* File Input for PDFs */}
+        {/* File Input for PDFs and Multiple Files */}
         <input
           ref={(el) => { pdfInputRef.current = el; }}
           type="file"
           accept="application/pdf,image/*"
+          multiple
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -653,7 +712,7 @@ const BusinessCardScanner = () => {
                       className="w-full"
                     >
                       <Upload className="h-5 w-5 mr-2" />
-                      Upload File
+                      Upload Files
                     </Button>
                   </div>
                 </div>
