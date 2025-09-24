@@ -99,8 +99,11 @@ const BusinessCardScanner = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Configure PDF.js worker
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  // Configure PDF.js worker - use local worker for better compatibility
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.js',
+    import.meta.url
+  ).toString();
 
   useEffect(() => {
     if (!user) {
