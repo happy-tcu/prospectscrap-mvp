@@ -18,6 +18,9 @@ import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
 import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap, Edit } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
+// Use Vite worker import to bundle PDF.js worker (avoids CDN issues)
+// @ts-expect-error Vite worker import provides a Worker constructor
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&module';
 
 interface ContactData {
   full_name: string;
@@ -99,11 +102,9 @@ const BusinessCardScanner = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Configure PDF.js worker - use local worker for better compatibility
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.js',
-    import.meta.url
-  ).toString();
+  // Configure PDF.js worker - bundled worker (no CDN)
+  // @ts-ignore Worker constructor from Vite import
+  pdfjsLib.GlobalWorkerOptions.workerPort = new pdfjsWorker();
 
   useEffect(() => {
     if (!user) {
