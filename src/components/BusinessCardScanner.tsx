@@ -368,9 +368,16 @@ const BusinessCardScanner = () => {
     
     setIsSaving(true);
     try {
+      // Sanitize date fields (Postgres DATE columns cannot accept empty strings)
+      const updateData: any = { ...contactData };
+      if (updateData.event_date === '' || updateData.event_date == null) {
+        // Ensure null rather than empty string for DATE column
+        updateData.event_date = null;
+      }
+
       const { error: updateError } = await supabase
         .from('contacts')
-        .update(contactData)
+        .update(updateData)
         .eq('id', editingContactId)
         .eq('user_id', user.id);
 
@@ -423,13 +430,20 @@ const BusinessCardScanner = () => {
       }
 
       // Save new contact
+      // Build insert payload and sanitize DATE fields
+      const payload: any = {
+        user_id: user.id,
+        ...contactData,
+        raw_ocr_text: rawText,
+      };
+      // Postgres DATE column cannot be empty string
+      if (payload.event_date === '' || payload.event_date == null) {
+        delete payload.event_date; // omit so it defaults to NULL
+      }
+
       const { error: insertError } = await supabase
         .from('contacts')
-        .insert({
-          user_id: user.id,
-          ...contactData,
-          raw_ocr_text: rawText
-        });
+        .insert(payload);
 
       if (insertError) {
         throw insertError;
