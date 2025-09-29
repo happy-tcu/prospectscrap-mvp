@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ContactsList from '@/components/ContactsList';
+import BatchProgressComponent from '@/components/BatchProgress';
+import BatchReviewGrid from '@/components/BatchReviewGrid';
 import { Camera, Upload, Scan, Save, User, Building, Mail, Phone, MapPin, FileText, Loader2, LogOut, List, Globe, CreditCard, GraduationCap, Edit } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 // Use Vite worker import to bundle PDF.js worker (avoids CDN issues)
@@ -90,11 +92,20 @@ const BusinessCardScanner = () => {
   // New batch processing and organization state
   const [batchData, setBatchData] = useState<ContactData[]>([]);
   const [isPdfBatch, setIsPdfBatch] = useState(false);
-  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const [batchProgress, setBatchProgress] = useState({ 
+    total: 0, 
+    processed: 0, 
+    successful: 0, 
+    failed: 0, 
+    currentFile: '' 
+  });
   const [eventName, setEventName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [batchId] = useState(() => crypto.randomUUID());
+  const [failedFiles, setFailedFiles] = useState<Array<{ fileName: string; error: string }>>([]);
+  const [editingBatchIndex, setEditingBatchIndex] = useState<number | null>(null);
+  const [tempEditData, setTempEditData] = useState<ContactData | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -182,6 +193,79 @@ const BusinessCardScanner = () => {
     return images;
   };
 
+  const processFilesInParallel = async (files: File[], maxConcurrent: number = 3) => {
+    const processedContacts: ContactData[] = [];
+    const failedFiles: Array<{ fileName: string; error: string }> = [];
+    let processedCount = 0;
+
+    // Process files in batches of maxConcurrent
+    for (let i = 0; i < files.length; i += maxConcurrent) {
+      const batch = Array.from(files).slice(i, i + maxConcurrent);
+      
+      const batchPromises = batch.map(async (file) => {
+        setBatchProgress(prev => ({ ...prev, currentFile: file.name }));
+        
+        try {
+          if (file.type === 'application/pdf') {
+            // Convert PDF to images and process each page
+            const images = await convertPdfToImages(file);
+            const pdfResults: ContactData[] = [];
+            
+            for (const imageFile of images) {
+              try {
+                const result = await extractWithOCR(imageFile);
+                if (result.parsed) {
+                  pdfResults.push({ ...result.parsed, source_user: user?.email || '' });
+                }
+              } catch (error) {
+                console.error(`Error processing PDF page:`, error);
+                failedFiles.push({
+                  fileName: `${file.name} (page)`,
+                  error: error instanceof Error ? error.message : 'Unknown error'
+                });
+              }
+            }
+            return pdfResults;
+          } else {
+            // Process image file
+            const result = await extractWithOCR(file);
+            if (result.parsed) {
+              return [{ ...result.parsed, source_user: user?.email || '' }];
+            }
+            return [];
+          }
+        } catch (error) {
+          console.error(`Error processing file ${file.name}:`, error);
+          failedFiles.push({
+            fileName: file.name,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+          return [];
+        }
+      });
+
+      // Wait for current batch to complete
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      batchResults.forEach((result, index) => {
+        processedCount++;
+        setBatchProgress(prev => ({
+          ...prev,
+          processed: processedCount,
+          successful: prev.successful + (result.status === 'fulfilled' ? result.value.length : 0),
+          failed: prev.failed + (result.status === 'rejected' ? 1 : 0),
+          currentFile: ''
+        }));
+
+        if (result.status === 'fulfilled') {
+          processedContacts.push(...result.value);
+        }
+      });
+    }
+
+    return { processedContacts, failedFiles };
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -191,54 +275,42 @@ const BusinessCardScanner = () => {
       setIsProcessing(true);
       setBatchData([]);
       setIsPdfBatch(false);
-      setBatchProgress({ current: 0, total: files.length });
+      setFailedFiles([]);
+      setBatchProgress({ 
+        total: files.length, 
+        processed: 0, 
+        successful: 0, 
+        failed: 0, 
+        currentFile: '' 
+      });
 
       toast({
         title: "Processing Multiple Files",
-        description: `Processing ${files.length} files...`,
+        description: `Processing ${files.length} files in parallel...`,
       });
 
-      const processedContacts: ContactData[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setBatchProgress({ current: i + 1, total: files.length });
+      try {
+        const { processedContacts, failedFiles: failed } = await processFilesInParallel(Array.from(files));
         
-        try {
-          if (file.type === 'application/pdf') {
-            // Convert PDF to images and process each page
-            const images = await convertPdfToImages(file);
-            for (const imageFile of images) {
-              try {
-                const result = await extractWithOCR(imageFile);
-                if (result.parsed) {
-                  processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
-                }
-              } catch (error) {
-                console.error(`Error processing PDF page:`, error);
-              }
-            }
-          } else {
-            // Process image file
-            const result = await extractWithOCR(file);
-            if (result.parsed) {
-              processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
-            }
-          }
-        } catch (error) {
-          console.error(`Error processing file ${file.name}:`, error);
-        }
+        setBatchData(processedContacts);
+        setFailedFiles(failed);
+        setStep('review');
+        
+        toast({
+          title: "Batch Processing Complete",
+          description: `Successfully processed ${processedContacts.length} contacts. ${failed.length} files failed.`,
+          variant: failed.length > 0 ? "destructive" : "default"
+        });
+      } catch (error) {
+        console.error('Batch processing error:', error);
+        toast({
+          title: "Batch Processing Failed",
+          description: "An error occurred during batch processing.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsProcessing(false);
       }
-
-      setBatchData(processedContacts);
-      setStep('review');
-      
-      toast({
-        title: "Batch Processing Complete",
-        description: `Successfully processed ${processedContacts.length} contacts from ${files.length} files.`,
-      });
-      
-      setIsProcessing(false);
       return;
     }
 
@@ -246,6 +318,7 @@ const BusinessCardScanner = () => {
     const file = files[0];
     if (file.type === 'application/pdf') {
       setIsProcessing(true);
+      setFailedFiles([]);
       try {
         toast({
           title: "Processing PDF",
@@ -255,34 +328,30 @@ const BusinessCardScanner = () => {
         const images = await convertPdfToImages(file);
         setBatchData([]);
         setIsPdfBatch(true);
-        setBatchProgress({ current: 0, total: images.length });
+        setBatchProgress({ 
+          total: images.length, 
+          processed: 0, 
+          successful: 0, 
+          failed: 0, 
+          currentFile: '' 
+        });
 
         toast({
           title: "PDF Converted",
-          description: `Processing ${images.length} pages...`,
+          description: `Processing ${images.length} pages in parallel...`,
         });
 
-        // Process each page sequentially
-        const processedContacts: ContactData[] = [];
-        for (let i = 0; i < images.length; i++) {
-          setBatchProgress({ current: i + 1, total: images.length });
-          
-          try {
-            const result = await extractWithOCR(images[i]);
-            if (result.parsed) {
-              processedContacts.push({ ...result.parsed, source_user: user?.email || '' });
-            }
-          } catch (error) {
-            console.error(`Error processing page ${i + 1}:`, error);
-          }
-        }
-
+        // Process PDF pages in parallel
+        const { processedContacts, failedFiles: failed } = await processFilesInParallel(images);
+        
         setBatchData(processedContacts);
+        setFailedFiles(failed);
         setStep('review');
         
         toast({
           title: "PDF Processing Complete",
           description: `Successfully processed ${processedContacts.length} of ${images.length} pages.`,
+          variant: failed.length > 0 ? "destructive" : "default"
         });
       } catch (error) {
         console.error('Error processing PDF:', error);
@@ -370,7 +439,7 @@ const BusinessCardScanner = () => {
         // Handle PDF batch processing
         const successfulResults = result.results.filter(r => r.success);
         setBatchData(successfulResults.map(r => ({ ...r.parsed, source_user: user.email || '' })));
-        setBatchProgress({ current: successfulResults.length, total: result.total_pages || 0 });
+        setBatchProgress(prev => ({ ...prev, processed: successfulResults.length, successful: successfulResults.length, total: result.total_pages || 0 }));
         setStep('review');
         
         toast({
@@ -462,6 +531,55 @@ const BusinessCardScanner = () => {
     }
   };
 
+  const handleSaveBatch = async () => {
+    if (!user || batchData.length === 0) return;
+    
+    setIsSaving(true);
+    try {
+      const promises = batchData.map(async (contact) => {
+        const payload: any = {
+          user_id: user.id,
+          ...contact,
+          raw_ocr_text: '', // No raw text for batch items
+        };
+        
+        // Sanitize date fields
+        if (payload.event_date === '' || payload.event_date == null) {
+          delete payload.event_date;
+        }
+        
+        return supabase.from('contacts').insert(payload);
+      });
+
+      const results = await Promise.allSettled(promises);
+      const successful = results.filter(r => r.status === 'fulfilled' && !r.value.error).length;
+      const failed = results.length - successful;
+
+      if (successful > 0) {
+        toast({
+          title: "Batch Save Complete",
+          description: `Saved ${successful} contacts successfully.${failed > 0 ? ` ${failed} failed.` : ''}`,
+          variant: failed > 0 ? "destructive" : "default"
+        });
+        
+        if (failed === 0) {
+          setStep('saved');
+        }
+      } else {
+        throw new Error('All contacts failed to save');
+      }
+    } catch (error) {
+      console.error('Batch save error:', error);
+      toast({
+        title: "Batch Save Failed",
+        description: "Could not save contacts. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSave = async (forceOverride: boolean = false) => {
     if (!user) return;
     
@@ -524,6 +642,43 @@ const BusinessCardScanner = () => {
     }
   };
 
+  // Batch editing functions
+  const handleBatchEditContact = (index: number) => {
+    setEditingBatchIndex(index);
+    setTempEditData({ ...batchData[index] });
+  };
+
+  const handleBatchSaveEdit = () => {
+    if (editingBatchIndex !== null && tempEditData) {
+      const newBatchData = [...batchData];
+      newBatchData[editingBatchIndex] = tempEditData;
+      setBatchData(newBatchData);
+      setEditingBatchIndex(null);
+      setTempEditData(null);
+    }
+  };
+
+  const handleBatchCancelEdit = () => {
+    setEditingBatchIndex(null);
+    setTempEditData(null);
+  };
+
+  const handleBatchUpdateContact = (index: number, field: keyof ContactData, value: string) => {
+    if (editingBatchIndex === index && tempEditData) {
+      setTempEditData({ ...tempEditData, [field]: value });
+    }
+  };
+
+  const handleBatchRemoveContact = (index: number) => {
+    const newBatchData = batchData.filter((_, i) => i !== index);
+    setBatchData(newBatchData);
+    setBatchProgress(prev => ({ 
+      ...prev, 
+      successful: prev.successful - 1,
+      total: prev.total - 1 
+    }));
+  };
+
   const handleReset = () => {
     setSelectedFile(null);
     setPreviewUrl('');
@@ -550,6 +705,11 @@ const BusinessCardScanner = () => {
     setEditingContactId(null);
     setShowDuplicateDialog(false);
     setDuplicateContact(null);
+    setBatchData([]);
+    setFailedFiles([]);
+    setEditingBatchIndex(null);
+    setTempEditData(null);
+    setBatchProgress({ total: 0, processed: 0, successful: 0, failed: 0, currentFile: '' });
     setStep('upload');
   };
 
@@ -756,7 +916,37 @@ const BusinessCardScanner = () => {
           </Card>
         )}
 
-        {step === 'review' && (
+        {step === 'review' && batchData.length > 0 && (
+          <div className="space-y-6">
+            {/* Batch Progress */}
+            <BatchProgressComponent 
+              progress={batchProgress}
+              isProcessing={isProcessing}
+              failedFiles={failedFiles}
+            />
+
+            {/* Batch Review Grid */}
+            <BatchReviewGrid
+              contacts={batchData}
+              onUpdateContact={handleBatchUpdateContact}
+              onRemoveContact={handleBatchRemoveContact}
+              editingIndex={editingBatchIndex}
+              onEditContact={handleBatchEditContact}
+              onSaveEdit={handleBatchSaveEdit}
+              onCancelEdit={handleBatchCancelEdit}
+              onSaveBatch={handleSaveBatch}
+              isSaving={isSaving}
+            />
+
+            <div className="flex justify-between">
+              <Button onClick={handleReset} variant="outline">
+                Start Over
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'review' && batchData.length === 0 && (
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Raw OCR Text */}
             <Card className="border shadow-sm">
